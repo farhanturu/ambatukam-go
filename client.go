@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -13,12 +14,14 @@ type Client struct {
 	policies []Policy
 	logger   *slog.Logger
 	hooks    Hooks
+	metrics  MetricsRecorder
 }
 
 func New(opts ...Option) *Client {
 	c := &Client{
-		hc:     http.DefaultClient,
-		logger: slog.Default(),
+		hc:      http.DefaultClient,
+		logger:  slog.Default(),
+		metrics: NewNoopMetricsRecorder(),
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -29,6 +32,8 @@ func New(opts ...Option) *Client {
 			pp.WithHooks(c.hooks)
 		case *CircuitBreakerPolicy:
 			pp.WithHooks(c.hooks)
+		case *FallbackPolicy:
+			pp.WithHooks(c.hooks)
 		}
 	}
 	return c
@@ -38,6 +43,8 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	if req == nil {
 		return nil, fmt.Errorf("ambatukam.Do: %w", ErrNilRequest)
 	}
+
+	start := time.Now()
 
 	funcs := make([]PolicyFunc, len(c.policies)+1)
 	funcs[len(funcs)-1] = func(ctx context.Context, r *http.Request) (*http.Response, error) {
@@ -51,7 +58,16 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	return funcs[0](req.Context(), req)
+	resp, err := funcs[0](req.Context(), req)
+
+	duration := time.Since(start)
+	status := 0
+	if resp != nil {
+		status = resp.StatusCode
+	}
+	c.metrics.RecordRequest(req.Method, req.URL.String(), status, duration)
+
+	return resp, err
 }
 
 func (c *Client) Get(ctx context.Context, url string) (*http.Response, error) {
@@ -95,4 +111,8 @@ type roundTripperFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func (c *Client) HealthChecker() *HealthChecker {
+	return NewHealthChecker(c)
 }

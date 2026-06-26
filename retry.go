@@ -147,6 +147,7 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 		URL:      req.URL.String(),
 		Status:   statusFromResp(lastResp),
 		Attempts: attempts,
+		Policy:   "retry",
 		Err:      fmt.Errorf("%w: %w", ErrMaxRetries, lastErrOrStatus(lastResp, lastErr)),
 	}
 }

@@ -12,6 +12,7 @@ var (
 	ErrTimeout      = errors.New("ambatukam: per-attempt timeout exceeded")
 	ErrBulkheadFull = errors.New("ambatukam: bulkhead full")
 	ErrRateLimited  = errors.New("ambatukam: rate limited")
+	ErrFallback     = errors.New("ambatukam: fallback failed")
 )
 
 type PermanentError struct{ Err error }
@@ -37,13 +38,18 @@ type RequestError struct {
 	URL      string
 	Status   int
 	Attempts int
+	Policy   string
 	Err      error
 }
 
 func (e *RequestError) Error() string {
-	parts := fmt.Sprintf("ambatukam: %s %s after %d attempt(s)", e.Method, e.URL, e.Attempts)
+	prefix := "ambatukam"
+	if e.Policy != "" {
+		prefix += "[" + e.Policy + "]"
+	}
+	parts := fmt.Sprintf("%s: %s %s after %d attempt(s)", prefix, e.Method, e.URL, e.Attempts)
 	if e.Status > 0 {
-		parts = fmt.Sprintf("ambatukam: %s %s returned status %d after %d attempt(s)", e.Method, e.URL, e.Status, e.Attempts)
+		parts = fmt.Sprintf("%s: %s %s returned status %d after %d attempt(s)", prefix, e.Method, e.URL, e.Status, e.Attempts)
 	}
 	if e.Err != nil {
 		return parts + ": " + e.Err.Error()

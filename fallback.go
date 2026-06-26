@@ -1,0 +1,43 @@
+package ambatukam
+
+import (
+	"context"
+	"net/http"
+)
+
+type FallbackPolicy struct {
+	handler func(req *http.Request, err error) (*http.Response, error)
+	hooks   Hooks
+}
+
+func NewFallback(cfg FallbackConfig) *FallbackPolicy {
+	return &FallbackPolicy{handler: cfg.Handler}
+}
+
+func (f *FallbackPolicy) WithHooks(h Hooks) *FallbackPolicy {
+	f.hooks = h
+	return f
+}
+
+func (f *FallbackPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
+	resp, err := next(ctx, req)
+	if err == nil {
+		return resp, nil
+	}
+
+	if f.hooks.OnFallback != nil {
+		f.hooks.OnFallback(req, err)
+	}
+
+	fallbackResp, fallbackErr := f.handler(req, err)
+	if fallbackErr != nil {
+		return nil, &RequestError{
+			Method:   req.Method,
+			URL:      req.URL.String(),
+			Policy:   "fallback",
+			Attempts: 1,
+			Err:      ErrFallback,
+		}
+	}
+	return fallbackResp, nil
+}

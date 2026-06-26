@@ -9,10 +9,11 @@ import (
 )
 
 type Hooks struct {
-	BeforeRequest func(req *http.Request) error
+	BeforeRequest func(ctx *http.Request) error
 	AfterResponse func(req *http.Request, resp *http.Response, err error)
 	OnRetry       func(req *http.Request, attempt int, nextDelay time.Duration)
 	OnStateChange func(name string, from, to State)
+	OnFallback    func(req *http.Request, err error)
 }
 
 type RetryConfig struct {
@@ -46,6 +47,14 @@ type RateLimitConfig struct {
 	Rate        float64
 	Burst       uint32
 	WaitTimeout time.Duration
+}
+
+type FallbackConfig struct {
+	Handler func(req *http.Request, err error) (*http.Response, error)
+}
+
+type SingleflightConfig struct {
+	Enabled bool
 }
 
 type Option func(*Client)
@@ -104,6 +113,21 @@ func WithRequestIDPolicy(p *RequestIDPolicy) Option {
 func WithHooks(h Hooks) Option {
 	return func(c *Client) {
 		c.hooks = h
+	}
+}
+func WithFallback(cfg FallbackConfig) Option {
+	return func(c *Client) {
+		c.policies = append(c.policies, NewFallback(cfg))
+	}
+}
+func WithSingleflight() Option {
+	return func(c *Client) {
+		c.policies = append(c.policies, NewSingleflight())
+	}
+}
+func WithMetrics(r MetricsRecorder) Option {
+	return func(c *Client) {
+		c.metrics = r
 	}
 }
 

@@ -23,7 +23,7 @@ type CircuitBreakerPolicy struct {
 	hooks  Hooks
 	name   string
 
-	mu               sync.Mutex
+	mu               sync.RWMutex
 	state            State
 	openedAt         time.Time
 	halfOpenPermits  uint32
@@ -80,8 +80,8 @@ func (cb *CircuitBreakerPolicy) WithName(name string) *CircuitBreakerPolicy {
 }
 
 func (cb *CircuitBreakerPolicy) State() State {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
+	cb.mu.RLock()
+	defer cb.mu.RUnlock()
 	return cb.state
 }
 
@@ -99,59 +99,63 @@ func (cb *CircuitBreakerPolicy) shouldTrip(resp *http.Response, err error) bool 
 }
 
 func (cb *CircuitBreakerPolicy) allowRequest() (bool, uint64) {
-	var (
-		transitionedFrom State
-		transitionedTo   State
-		didTransition    bool
-		allow            bool
-		gen              uint64
-	)
-	cb.mu.Lock()
+	cb.mu.RLock()
 	switch cb.state {
 	case StateClosed:
-		allow = true
-		gen = cb.generation.Load()
-		cb.mu.Unlock()
-		return allow, gen
+		gen := cb.generation.Load()
+		cb.mu.RUnlock()
+		return true, gen
 	case StateOpen:
 		if time.Since(cb.openedAt) >= cb.cfg.OpenDuration {
-			cb.state = StateHalfOpen
-			cb.halfOpenPermits = cb.cfg.HalfOpenMaxReqs
-			cb.halfOpenInFlight = 0
-			cb.generation.Add(1)
-			cb.logger.Info("circuit: open -> half-open",
-				slog.Uint64("permits", uint64(cb.halfOpenPermits)),
-			)
-			transitionedFrom = StateOpen
-			transitionedTo = StateHalfOpen
-			didTransition = true
-		} else {
-			gen = cb.generation.Load()
+			cb.mu.RUnlock()
+			cb.mu.Lock()
+			if cb.state == StateOpen && time.Since(cb.openedAt) >= cb.cfg.OpenDuration {
+				cb.state = StateHalfOpen
+				cb.halfOpenPermits = cb.cfg.HalfOpenMaxReqs
+				cb.halfOpenInFlight = 0
+				cb.generation.Add(1)
+				cb.logger.Info("circuit: open -> half-open",
+					slog.Uint64("permits", uint64(cb.halfOpenPermits)),
+				)
+				if cb.hooks.OnStateChange != nil {
+					cb.hooks.OnStateChange(cb.name, StateOpen, StateHalfOpen)
+				}
+			}
+			gen := cb.generation.Load()
+			if cb.halfOpenPermits > 0 {
+				cb.halfOpenPermits--
+				cb.halfOpenInFlight++
+				cb.mu.Unlock()
+				return true, gen
+			}
 			cb.mu.Unlock()
 			return false, gen
 		}
-		fallthrough
+		gen := cb.generation.Load()
+		cb.mu.RUnlock()
+		return false, gen
 	case StateHalfOpen:
+		gen := cb.generation.Load()
 		if cb.halfOpenPermits > 0 {
-			cb.halfOpenPermits--
-			cb.halfOpenInFlight++
-			allow = true
+			cb.mu.RUnlock()
+			cb.mu.Lock()
+			if cb.state == StateHalfOpen && cb.halfOpenPermits > 0 {
+				cb.halfOpenPermits--
+				cb.halfOpenInFlight++
+				cb.mu.Unlock()
+				return true, gen
+			}
+			cb.mu.Unlock()
+			return false, gen
 		}
-		gen = cb.generation.Load()
+		cb.mu.RUnlock()
+		return false, gen
 	}
-	cb.mu.Unlock()
-	if didTransition && cb.hooks.OnStateChange != nil {
-		cb.hooks.OnStateChange(cb.name, transitionedFrom, transitionedTo)
-	}
-	return allow, gen
+	cb.mu.RUnlock()
+	return false, 0
 }
 
 func (cb *CircuitBreakerPolicy) onSuccess(genAtEntry uint64) {
-	var (
-		transitionedFrom State
-		transitionedTo   State
-		didTransition    bool
-	)
 	cb.mu.Lock()
 	if cb.generation.Load() == genAtEntry {
 		switch cb.state {
@@ -166,23 +170,15 @@ func (cb *CircuitBreakerPolicy) onSuccess(genAtEntry uint64) {
 			cb.halfOpenInFlight = 0
 			cb.generation.Add(1)
 			cb.logger.Info("circuit: half-open -> closed")
-			transitionedFrom = StateHalfOpen
-			transitionedTo = StateClosed
-			didTransition = true
+			if cb.hooks.OnStateChange != nil {
+				cb.hooks.OnStateChange(cb.name, StateHalfOpen, StateClosed)
+			}
 		}
 	}
 	cb.mu.Unlock()
-	if didTransition && cb.hooks.OnStateChange != nil {
-		cb.hooks.OnStateChange(cb.name, transitionedFrom, transitionedTo)
-	}
 }
 
 func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
-	var (
-		transitionedFrom State
-		transitionedTo   State
-		didTransition    bool
-	)
 	cb.mu.Lock()
 	if cb.generation.Load() == genAtEntry {
 		switch cb.state {
@@ -198,9 +194,9 @@ func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
 					slog.Uint64("failures", uint64(n)),
 					slog.Duration("open_duration", cb.cfg.OpenDuration),
 				)
-				transitionedFrom = StateClosed
-				transitionedTo = StateOpen
-				didTransition = true
+				if cb.hooks.OnStateChange != nil {
+					cb.hooks.OnStateChange(cb.name, StateClosed, StateOpen)
+				}
 			}
 		case StateHalfOpen:
 			cb.halfOpenInFlight--
@@ -210,15 +206,12 @@ func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
 			cb.halfOpenInFlight = 0
 			cb.generation.Add(1)
 			cb.logger.Warn("circuit: half-open -> open (trial failed)")
-			transitionedFrom = StateHalfOpen
-			transitionedTo = StateOpen
-			didTransition = true
+			if cb.hooks.OnStateChange != nil {
+				cb.hooks.OnStateChange(cb.name, StateHalfOpen, StateOpen)
+			}
 		}
 	}
 	cb.mu.Unlock()
-	if didTransition && cb.hooks.OnStateChange != nil {
-		cb.hooks.OnStateChange(cb.name, transitionedFrom, transitionedTo)
-	}
 }
 
 func (cb *CircuitBreakerPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
