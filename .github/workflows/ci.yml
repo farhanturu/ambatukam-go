@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22', '1.23']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+      - name: gofmt
+        run: gofmt -l . | (! grep .)
+      - name: go vet
+        run: go vet ./...
+      - name: go build
+        run: go build ./...
+      - name: go build example
+        run: go build ./examples/basic
+      - name: golangci-lint
+        if: matrix.go-version == '1.23'
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+      - name: go test (race)
+        run: go test -race -timeout 60s -count=1 -coverprofile=coverage.out ./...
+      - name: verify examples
+        run: go test -run Example ./...
+      - name: example smoke
+        run: go run ./examples/basic
+
+  coverage:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+      - run: go test -race -timeout 60s -count=1 -coverprofile=coverage.out ./...
+      - uses: codecov/codecov-action@v4
+        with:
+          file: coverage.out
+          fail_ci_if_error: false

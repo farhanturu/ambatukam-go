@@ -1,0 +1,15 @@
+*.test
+*.out
+bin/
+vendor/
+.env
+coverage.out
+coverage.html
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build artifacts
+/basic
+/ambatukam-go
