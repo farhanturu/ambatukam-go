@@ -5,8 +5,8 @@
 <h1 align="center">Ambatukam Go</h1>
 
 <p align="center">
-  <strong>Composable, idiomatic Go HTTP resilience.<br>
-  Retry · Circuit Breaker · Bulkhead · Rate Limiter · Timeout · Hooks</strong>
+  <strong>Your Go HTTP client just got superpowers.<br>
+  One line of code. Zero dependencies. Production-grade resilience.</strong>
 </p>
 
 <p align="center">
@@ -18,47 +18,84 @@
 </p>
 
 <p align="center">
-  One library. One API. Zero dependencies. Production-grade resilience in 10 lines.
+  Stop writing retry loops. Stop handling timeouts manually.<br>
+  Stop panicking when Stripe goes down at 3 AM.<br>
+  <strong>Ambatukam Go handles all of it — automatically.</strong>
 </p>
 
 ---
 
-## Why Ambatukam Go?
+## 😤 The Problem
 
-Every Go backend that calls external services needs the same five things: **retry** on transient failures, **circuit breaker** to fail fast when downstream is down, **bulkhead** to limit concurrency, **rate limiting** to respect API quotas, and **per-attempt timeout** to bound latency.
+Every Go backend that calls external services ends up like this:
 
-Most teams stitch together 3–5 different libraries and write glue code nobody owns.
+```go
+// Your code at 3 AM when Stripe is down
+resp, err := http.Get("https://api.stripe.com/charges")
+if err != nil {
+    // retry? how many times? with what backoff?
+    // what if it keeps failing? circuit break?
+    // what about rate limits? timeouts?
+    // TODO: fix this later (you never will)
+}
+```
 
-**Ambatukam Go is one library with one API.**
+You end up stitching together 3-5 libraries, writing glue code nobody owns, and debugging resilience bugs at 3 AM.
 
-| Feature | Ambatukam Go | Stitched Stack |
-|---|:---:|:---:|
-| Retry with backoff + jitter | ✅ | `cenkalti/backoff` |
-| Circuit breaker (closed/open/half-open) | ✅ | `sony/gobreaker` |
-| Bulkhead (concurrency limit) | ✅ | DIY or `slok/goresilience` |
-| Rate limiter (token bucket) | ✅ | `golang.org/x/time/rate` |
-| Per-attempt timeout | ✅ | manual |
-| Body buffering for safe POST retry | ✅ | DIY (often broken) |
-| Retry-After header support | ✅ | most libs skip |
-| Generic JSON helpers | ✅ | DIY |
-| Request ID propagation | ✅ | DIY |
-| Hooks (auth, logging, metrics) | ✅ | varies |
-| Composable policies (`Chain`) | ✅ | manual |
-| **Zero dependencies** | ✅ | n deps |
+## 😎 The Solution
+
+```go
+// Your code with Ambatukam Go
+client := ambatukam.New(
+    ambatukam.WithRetry(ambatukam.RetryConfig{MaxRetries: 3}),
+    ambatukam.WithCircuitBreaker(ambatukam.CircuitConfig{FailureThreshold: 5}),
+    ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 2 * time.Second}),
+)
+resp, err := client.Get(ctx, "https://api.stripe.com/charges")
+// ✅ Auto-retry with exponential backoff
+// ✅ Circuit opens when Stripe is down
+// ✅ Timeout per attempt
+// ✅ You sleep at 3 AM
+```
+
+**10 lines. Zero dependencies. Production-grade.**
 
 ---
 
-## Install
+## ⚡ Why Ambatukam Go?
+
+| Feature | Ambatukam Go | Other Libraries |
+|---|:---:|:---:|
+| Retry with backoff + jitter | ✅ Built-in | Need `cenkalti/backoff` |
+| Circuit breaker | ✅ Built-in | Need `sony/gobreaker` |
+| Bulkhead (concurrency limit) | ✅ Built-in | DIY or `slok/goresilience` |
+| Rate limiter | ✅ Built-in | Need `golang.org/x/time/rate` |
+| Per-attempt timeout | ✅ Built-in | Manual |
+| Fallback strategy | ✅ Built-in | DIY |
+| Singleflight (dedup) | ✅ Built-in | Need `golang.org/x/sync` |
+| Health check endpoint | ✅ Built-in | DIY |
+| Metrics interface | ✅ Built-in | DIY |
+| Body buffering for POST retry | ✅ Automatic | Often broken |
+| Retry-After header | ✅ Automatic | Most skip |
+| Generic JSON helpers | ✅ Built-in | DIY |
+| Request ID propagation | ✅ Built-in | DIY |
+| Hooks (auth, logging, metrics) | ✅ 4 callbacks | Varies |
+| Composable policies | ✅ `Chain()` | Manual |
+| **Zero dependencies** | ✅ **None** | 3-5 deps |
+
+---
+
+## 🚀 Install
 
 ```bash
 go get github.com/farhanturu/ambatukam-go
 ```
 
-Requires **Go 1.21+** (uses generics, `slog`, `atomic.Int64`).
+Requires **Go 1.21+**. Zero external dependencies.
 
 ---
 
-## Quick Start
+## 🎯 Quick Start
 
 ```go
 package main
@@ -93,7 +130,7 @@ func main() {
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -104,19 +141,23 @@ func main() {
 │   │        │  │ Breaker   │  │        │  │          │   │
 │   └────────┘  └──────────┘  └────────┘  └──────────┘   │
 │        ↓           ↓             ↓            ↓         │
+│   ┌────────┐  ┌──────────┐  ┌──────────┐               │
+│   │Fallback│  │Singleflight│ │  Timeout │               │
+│   └────────┘  └──────────┘  └──────────┘               │
+│        ↓           ↓             ↓                      │
 │   ┌──────────────────────────────────────────────────┐  │
-│   │     Timeout · Request ID · Hooks                 │  │
+│   │     Request ID · Hooks · Metrics                 │  │
 │   └──────────────────────────────────────────────────┘  │
 │                         ↓                                │
 │                   http.Client.Do()                       │
 └──────────────────────────────────────────────────────────┘
 ```
 
-Policies are composable middleware — outer-to-inner order: `retry → circuit → timeout → HTTP`.
+Policies are composable middleware — outer-to-inner order: `retry → circuit → fallback → HTTP`.
 
 ---
 
-## Features
+## 🎨 Features
 
 ### 🔄 Retry with Backoff
 
@@ -132,7 +173,7 @@ ambatukam.WithRetry(ambatukam.RetryConfig{
 
 Three strategies: `ExponentialBackoff`, `ConstantBackoff`, `LinearBackoff`.
 
-Body buffering is automatic — POST bodies are read once and replayed on each retry. Only idempotent methods (GET, HEAD, PUT, DELETE, OPTIONS, TRACE) retry by default; opt in for POST with a custom `ShouldRetry`.
+Body buffering is automatic — POST bodies are read once and replayed on each retry. Only idempotent methods retry by default; opt in for POST with custom `ShouldRetry`.
 
 ### ⚡ Circuit Breaker
 
@@ -144,9 +185,9 @@ ambatukam.WithCircuitBreaker(ambatukam.CircuitConfig{
 })
 ```
 
-Three-state machine: **closed → open → half-open**. Race-safe under concurrent load with atomic generation counters.
+Three-state machine: **closed → open → half-open**. Race-safe with `sync.RWMutex` for better read concurrency.
 
-### 🚧 Bulkhead (Concurrency Limit)
+### 🚧 Bulkhead
 
 ```go
 ambatukam.WithBulkhead(ambatukam.BulkheadConfig{
@@ -156,19 +197,19 @@ ambatukam.WithBulkhead(ambatukam.BulkheadConfig{
 })
 ```
 
-Limits in-flight requests to downstream. Optional bounded queue with timeout.
+Limits in-flight requests. Optional bounded queue with timeout.
 
 ### 🚦 Rate Limiter
 
 ```go
 ambatukam.WithRateLimit(ambatukam.RateLimitConfig{
-    Rate:        10,                     // tokens per second
-    Burst:       5,                      // bucket capacity
-    WaitTimeout: 100 * time.Millisecond, // 0 = fail fast
+    Rate:        10,
+    Burst:       5,
+    WaitTimeout: 100 * time.Millisecond,
 })
 ```
 
-Token bucket. `Rate <= 0` denies all requests (fail-closed).
+Token bucket. `Rate <= 0` denies all requests.
 
 ### ⏱️ Timeout
 
@@ -178,13 +219,33 @@ ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 2 * time.Second})
 
 Per-attempt deadline. Parent `ctx` cancellation takes precedence.
 
-### 🏷️ Request ID Propagation
+### 🛟 Fallback
 
 ```go
-ambatukam.WithRequestID("X-Request-ID") // empty = default header
+ambatukam.WithFallback(ambatukam.FallbackConfig{
+    Handler: func(req *http.Request, err error) (*http.Response, error) {
+        return cachedResponse, nil
+    },
+})
 ```
 
-Auto-generates a 12-byte hex ID per request, or propagates an existing one.
+Return custom response when everything fails. Never leave your users hanging.
+
+### 🔗 Singleflight
+
+```go
+ambatukam.WithSingleflight()
+```
+
+Deduplicate identical concurrent requests. 10 goroutines requesting the same data = 1 HTTP call.
+
+### 🏷️ Request ID
+
+```go
+ambatukam.WithRequestID("X-Request-ID")
+```
+
+Auto-generates 12-byte hex ID per request, or propagates existing one.
 
 ### 🪝 Hooks
 
@@ -195,36 +256,67 @@ ambatukam.WithHooks(ambatukam.Hooks{
         return nil
     },
     OnRetry: func(req *http.Request, attempt int, nextDelay time.Duration) {
-        log.Printf("retrying %s (attempt %d, delay %v)", req.URL, attempt, nextDelay)
+        log.Printf("retrying %s (attempt %d)", req.URL, attempt)
     },
     OnStateChange: func(name string, from, to ambatukam.State) {
         metrics.Gauge("circuit_state").Set(string(to))
     },
+    OnFallback: func(req *http.Request, err error) {
+        log.Printf("fallback triggered: %v", err)
+    },
 })
 ```
 
-Four callbacks: `BeforeRequest`, `AfterResponse`, `OnRetry`, `OnStateChange`. All optional.
+Five callbacks: `BeforeRequest`, `AfterResponse`, `OnRetry`, `OnStateChange`, `OnFallback`.
+
+### 📊 Metrics
+
+```go
+ambatukam.WithMetrics(myPrometheusRecorder)
+```
+
+Implement `MetricsRecorder` interface for Prometheus, Datadog, or any metrics system.
+
+### 🏥 Health Check
+
+```go
+hc := client.HealthChecker()
+http.Handle("/health", hc.Handler())
+```
+
+Returns JSON with policy status, memory stats, and uptime.
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-06-26T20:00:00Z",
+  "uptime": "5m30s",
+  "policies": {
+    "circuit_breaker": "closed",
+    "bulkhead_in_flight": "3",
+    "bulkhead_denied": "0"
+  },
+  "memory": {
+    "alloc_bytes": 1234567,
+    "num_gc": 5
+  }
+}
+```
 
 ### 📦 Generic JSON Helpers
 
 ```go
-type User struct {
-    Name string `json:"name"`
-    Age  int    `json:"age"`
-}
-
 u, err := ambatukam.GetJSON[User](client, ctx, "https://api.example.com/users/1")
-
-created, err := ambatukam.PostJSON[User](client, ctx, "https://api.example.com/users", User{Name: "bob"})
+created, err := ambatukam.PostJSON[User](client, ctx, "https://api.example.com/users", user)
 ```
 
-Auto-handles JSON encode/decode, content-type, and 4xx/5xx errors as `RequestError`.
+Auto-handles JSON encode/decode, content-type, and 4xx/5xx errors.
 
 ---
 
-## Preset Configs
+## 🎯 Preset Configs
 
-Ready-to-use configurations for common scenarios:
+Don't want to tune? Use presets:
 
 ```go
 // Balanced production defaults
@@ -245,7 +337,7 @@ client := ambatukam.New(ambatukam.ConservativeConfig()...)
 
 ---
 
-## Patterns
+## 💡 Real-World Patterns
 
 ### Stripe / Payment Gateway
 
@@ -257,6 +349,11 @@ client := ambatukam.New(
         Backoff:    ambatukam.ConstantBackoff(500 * time.Millisecond),
     }),
     ambatukam.WithCircuitBreaker(ambatukam.CircuitConfig{FailureThreshold: 5}),
+    ambatukam.WithFallback(ambatukam.FallbackConfig{
+        Handler: func(req *http.Request, err error) (*http.Response, error) {
+            return nil, errors.New("payment service unavailable, please retry later")
+        },
+    }),
 )
 ```
 
@@ -271,6 +368,7 @@ client := ambatukam.New(
             return nil
         },
     }),
+    ambatukam.WithSingleflight(),
     ambatukam.WithRetry(ambatukam.DefaultRetryConfig()),
 )
 ```
@@ -285,26 +383,17 @@ client := ambatukam.New(
         WaitTimeout: 2 * time.Second,
     }),
     ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 30 * time.Second}),
+    ambatukam.WithFallback(ambatukam.FallbackConfig{
+        Handler: func(req *http.Request, err error) (*http.Response, error) {
+            return getCachedData(req.URL.String())
+        },
+    }),
 )
 ```
 
-### Custom Composition Order
-
-```go
-client := ambatukam.New(ambatukam.WithPolicy(ambatukam.Chain(
-    ambatukam.NewRetry(ambatukam.DefaultRetryConfig()),
-    ambatukam.NewCircuitBreaker(ambatukam.DefaultCircuitConfig()),
-    ambatukam.NewTimeout(ambatukam.TimeoutConfig{Timeout: 5 * time.Second}),
-)))
-```
-
-**Order matters**: outer-to-inner is `[retry [circuit [timeout [HTTP]]]]`.
-
 ---
 
-## Error Handling
-
-Use `errors.Is` to distinguish error types:
+## 🚨 Error Handling
 
 ```go
 resp, err := client.Get(ctx, url)
@@ -314,35 +403,28 @@ case errors.Is(err, ambatukam.ErrMaxRetries):     // gave up after N attempts
 case errors.Is(err, ambatukam.ErrTimeout):        // attempt hit its deadline
 case errors.Is(err, ambatukam.ErrBulkheadFull):   // at concurrency cap
 case errors.Is(err, ambatukam.ErrRateLimited):    // rate-limited
+case errors.Is(err, ambatukam.ErrFallback):       // fallback failed
 case errors.Is(err, ambatukam.ErrNilRequest):     // programming error
-case errors.Is(err, context.Canceled):            // ctx was canceled
 }
 ```
 
-For full context (method, URL, status, attempts):
+For full context:
 
 ```go
 var reqErr *ambatukam.RequestError
 if errors.As(err, &reqErr) {
-    log.Printf("%s %s returned %d after %d attempts",
-        reqErr.Method, reqErr.URL, reqErr.Status, reqErr.Attempts)
-}
-```
-
-Mark errors as non-retryable:
-
-```go
-resp, err := client.Get(ctx, url)
-if err != nil {
-    return ambatukam.Permanent(err) // skip retry
+    log.Printf("[%s] %s %s returned %d after %d attempts",
+        reqErr.Policy, reqErr.Method, reqErr.URL, reqErr.Status, reqErr.Attempts)
 }
 ```
 
 ---
 
-## Benchmarks
+## 📈 Benchmarks
 
-Measured on Intel Core i5-8250U @ 1.60GHz, Linux, Go 1.21 (`go test -bench=. -benchmem -benchtime=2s`).
+```
+go test -bench=. -benchmem -benchtime=2s ./...
+```
 
 | Setup | ns/op | B/op | allocs/op |
 |---|---|---|---|
@@ -352,11 +434,11 @@ Measured on Intel Core i5-8250U @ 1.60GHz, Linux, Go 1.21 (`go test -bench=. -be
 | Ambatukam Go (full stack) | 235,341 | 16,757 | 120 |
 | Ambatukam Go (parallel) | 26,064 | 8,214 | 77 |
 
-Run locally: `go test -bench=. -benchmem -benchtime=2s ./...`
+**Zero overhead** when no policies enabled. Full stack costs ~2.4x vs raw stdlib.
 
 ---
 
-## Migration
+## 🔄 Migration
 
 <details>
 <summary><strong>From cenkalti/backoff + sony/gobreaker</strong></summary>
@@ -381,18 +463,12 @@ client := ambatukam.New(
 <details>
 <summary><strong>From hashicorp/go-retryablehttp</strong></summary>
 
-Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transport via `WithHTTPClient`, or use `Do`/`Get`/`Post` directly. Adds circuit breaker, bulkhead, rate limit, hooks, and request ID.
-</details>
-
-<details>
-<summary><strong>From slok/goresilience</strong></summary>
-
-Both use a runner/middleware pattern. See [MIGRATION.md](./docs/MIGRATION.md) for a detailed guide.
+Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transport via `WithHTTPClient`, or use `Do`/`Get`/`Post` directly. Adds circuit breaker, bulkhead, rate limit, fallback, singleflight, hooks, and request ID.
 </details>
 
 ---
 
-## Documentation
+## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -405,38 +481,35 @@ Both use a runner/middleware pattern. See [MIGRATION.md](./docs/MIGRATION.md) fo
 
 ---
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| POST isn't being retried | Only idempotent methods retry by default. Use custom `ShouldRetry` or idempotency-key header. |
-| Circuit opens too often | Lower `FailureThreshold` or increase `OpenDuration`. Use `OnStateChange` hook to monitor. |
-| Bulkhead denies immediately | Increase `MaxQueue` or `MaxConcurrent`. See [COOKBOOK](./docs/COOKBOOK.md). |
-| Rate limit denies unexpectedly | `Rate == 0` = disabled, `Rate < 0` = deny all. Verify your config value. |
-| Need debug logging | Use `ambatukam.WithDebug()` for verbose logging. |
+| POST isn't being retried | Only idempotent methods retry by default. Use custom `ShouldRetry`. |
+| Circuit opens too often | Lower `FailureThreshold` or increase `OpenDuration`. |
+| Bulkhead denies immediately | Increase `MaxQueue` or `MaxConcurrent`. |
+| Rate limit denies unexpectedly | `Rate == 0` = disabled, `Rate < 0` = deny all. |
+| Need debug logging | Use `ambatukam.WithDebug()`. |
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-### v1.0 (current)
-Retry, circuit breaker, bulkhead, rate limiter, timeout, request ID, hooks, generic JSON helpers, permanent errors, preset configs.
+### v1.1 (current)
+Retry, circuit breaker, bulkhead, rate limiter, timeout, request ID, hooks, generic JSON helpers, permanent errors, preset configs, **fallback strategy, singleflight, health check, metrics interface**.
 
-### v1.1 (next)
-Hedged requests (parallel speculative retries), fallback strategy (return stale data on failure), request deduplication (singleflight).
-
-### v2.0
+### v2.0 (next)
 OpenTelemetry tracing + Prometheus metrics, adaptive timeout (based on p99 latency), distributed (Redis-backed) circuit breaker, gRPC support.
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 PRs welcome. Run `go test ./...` and `go vet ./...` before submitting; add a test for any new behavior. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ---
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](./LICENSE).
 
@@ -445,5 +518,7 @@ MIT — see [LICENSE](./LICENSE).
 <p align="center">
   <img src="./assets/logo-icon.svg" alt="Ambatukam Go" width="64">
   <br>
+  <strong>Stop writing resilience code. Start shipping features.</strong>
+  <br><br>
   <sub>Built with ❤️ by <a href="https://github.com/farhanturu">farhanturu</a></sub>
 </p>
