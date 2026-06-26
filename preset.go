@@ -5,19 +5,10 @@ import (
 	"time"
 )
 
-// ProductionConfig returns a balanced default configuration suitable for most
-// production services. Use with New():
-//
-//	client := ambatukam.New(ambatukam.ProductionConfig()...)
-//
-// Tuning: 3 retries, 30s timeout, 5-failure circuit, NumCPU*4 concurrent.
 func ProductionConfig() []Option {
-	return DefaultConfig() // alias — same as DefaultConfig
+	return DefaultConfig()
 }
 
-// AggressiveConfig returns a strict, fast-fail configuration for protecting
-// fragile downstream services. Lower retry count, lower circuit threshold,
-// short timeouts.
 func AggressiveConfig() []Option {
 	return []Option{
 		WithRetry(RetryConfig{
@@ -35,13 +26,11 @@ func AggressiveConfig() []Option {
 		WithTimeout(TimeoutConfig{Timeout: 5 * time.Second}),
 		WithBulkhead(BulkheadConfig{
 			MaxConcurrent: uint32(runtime.NumCPU() * 2),
-			MaxQueue:      0, // fail fast
+			MaxQueue:      0,
 		}),
 	}
 }
 
-// ConservativeConfig returns a generous configuration for critical services
-// that must not fail. Many retries, slow trip, larger timeouts.
 func ConservativeConfig() []Option {
 	return []Option{
 		WithRetry(RetryConfig{

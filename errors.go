@@ -14,9 +14,6 @@ var (
 	ErrRateLimited  = errors.New("ambatukam: rate limited")
 )
 
-// PermanentError signals that a retry must NOT be attempted for this error.
-// Wrap any error with Permanent() to mark it as non-retryable; the retry
-// policy will propagate it immediately without further attempts.
 type PermanentError struct{ Err error }
 
 func (e *PermanentError) Error() string {
@@ -28,7 +25,6 @@ func (e *PermanentError) Error() string {
 
 func (e *PermanentError) Unwrap() error { return e.Err }
 
-// Permanent wraps err to mark it as non-retryable.
 func Permanent(err error) error {
 	if err == nil {
 		return nil
@@ -36,8 +32,6 @@ func Permanent(err error) error {
 	return &PermanentError{Err: err}
 }
 
-// RequestError captures full context about a failed request:
-// method, URL, status code, attempt count, and the underlying error.
 type RequestError struct {
 	Method   string
 	URL      string

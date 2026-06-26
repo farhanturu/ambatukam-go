@@ -9,16 +9,6 @@ import (
 	"net/http"
 )
 
-// GetJSON performs a GET request and decodes the response body as JSON into T.
-//
-// If the response status is 4xx or 5xx, returns an error wrapping the status code.
-// If decoding fails, returns an error wrapping the underlying decode error.
-//
-// All configured policies (retry, circuit, bulkhead, rate limit, timeout) apply
-// normally to this request.
-//
-// The returned *RequestError (on non-2xx) always has Attempts=1 since this is
-// the final response after any retries configured on the Client.
 func GetJSON[T any](c *Client, ctx context.Context, url string) (T, error) {
 	var zero T
 	resp, err := c.Get(ctx, url)
@@ -45,16 +35,6 @@ func GetJSON[T any](c *Client, ctx context.Context, url string) (T, error) {
 	return v, nil
 }
 
-// PostJSON marshals body as JSON, performs a POST with content-type
-// "application/json", and decodes the response body as JSON into T.
-//
-// If the response status is 4xx or 5xx, returns an error wrapping the status code.
-// If decoding fails, returns an error wrapping the underlying decode error.
-//
-// All configured policies apply normally.
-//
-// The returned *RequestError (on non-2xx) always has Attempts=1 since this is
-// the final response after any retries configured on the Client.
 func PostJSON[T any](c *Client, ctx context.Context, url string, body any) (T, error) {
 	var zero T
 
