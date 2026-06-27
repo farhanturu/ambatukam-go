@@ -71,15 +71,17 @@ resp, err := client.Get(ctx, "https://api.stripe.com/charges")
 | Bulkhead (concurrency limit) | ✅ Built-in | DIY or `slok/goresilience` |
 | Rate limiter | ✅ Built-in | Need `golang.org/x/time/rate` |
 | Per-attempt timeout | ✅ Built-in | Manual |
+| Per-URL timeout map | ✅ Built-in | DIY |
 | Fallback strategy | ✅ Built-in | DIY |
 | Singleflight (dedup) | ✅ Built-in | Need `golang.org/x/sync` |
 | Health check endpoint | ✅ Built-in | DIY |
-| Metrics interface | ✅ Built-in | DIY |
+| Prometheus metrics | ✅ Built-in | DIY |
+| Custom logger (zerolog/zap) | ✅ Built-in | Manual |
 | Body buffering for POST retry | ✅ Automatic | Often broken |
 | Retry-After header | ✅ Automatic | Most skip |
 | Generic JSON helpers | ✅ Built-in | DIY |
 | Request ID propagation | ✅ Built-in | DIY |
-| Hooks (auth, logging, metrics) | ✅ 4 callbacks | Varies |
+| Hooks (auth, logging, metrics) | ✅ 5 callbacks | Varies |
 | Composable policies | ✅ `Chain()` | Manual |
 | **Zero dependencies** | ✅ **None** | 3-5 deps |
 
@@ -219,6 +221,18 @@ ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 2 * time.Second})
 
 Per-attempt deadline. Parent `ctx` cancellation takes precedence.
 
+### ⏱️ Timeout Map (Per-URL)
+
+```go
+ambatukam.WithTimeoutMap(map[string]time.Duration{
+    "/api/payments/*": 10 * time.Second,
+    "/api/users/*":    5 * time.Second,
+    "/api/health":     1 * time.Second,
+})
+```
+
+Different timeouts for different URL patterns. Supports wildcards.
+
 ### 🛟 Fallback
 
 ```go
@@ -276,6 +290,35 @@ ambatukam.WithMetrics(myPrometheusRecorder)
 ```
 
 Implement `MetricsRecorder` interface for Prometheus, Datadog, or any metrics system.
+
+### 📊 Prometheus Metrics
+
+```go
+recorder := ambatukam.NewPrometheusRecorder(ambatukam.PrometheusConfig{
+    RequestsTotal:     prometheusRequestsTotal,
+    RetriesTotal:      prometheusRetriesTotal,
+    CircuitState:      prometheusCircuitState,
+    RequestDuration:   prometheusRequestDuration,
+    BulkheadDenied:    prometheusBulkheadDenied,
+    RateLimitDenied:   prometheusRateLimitDenied,
+    FallbacksTotal:    prometheusFallbacksTotal,
+    TimeoutsTotal:     prometheusTimeoutsTotal,
+    CircuitTransitions: prometheusCircuitTransitions,
+})
+client := ambatukam.New(ambatukam.WithMetrics(recorder))
+```
+
+Full Prometheus integration with Counter, Gauge, Histogram vectors.
+
+### 📝 Custom Logger
+
+```go
+client := ambatukam.New(
+    ambatukam.WithCustomLogger(myZerologAdapter),
+)
+```
+
+Implement `Logger` interface for zerolog, zap, or any logging library.
 
 ### 🏥 Health Check
 
@@ -495,11 +538,11 @@ Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transpo
 
 ## 🗺️ Roadmap
 
-### v1.1 (current)
-Retry, circuit breaker, bulkhead, rate limiter, timeout, request ID, hooks, generic JSON helpers, permanent errors, preset configs, **fallback strategy, singleflight, health check, metrics interface**.
+### v1.2 (current)
+Retry, circuit breaker, bulkhead, rate limiter, timeout, request ID, hooks, generic JSON helpers, permanent errors, preset configs, fallback strategy, singleflight, health check, metrics interface, **Prometheus metrics, custom logger, timeout map**.
 
 ### v2.0 (next)
-OpenTelemetry tracing + Prometheus metrics, adaptive timeout (based on p99 latency), distributed (Redis-backed) circuit breaker, gRPC support.
+OpenTelemetry tracing, adaptive timeout (based on p99 latency), distributed (Redis-backed) circuit breaker, gRPC support.
 
 ---
 
