@@ -15,8 +15,9 @@ type BulkheadPolicy struct {
 	logger  *slog.Logger
 	metrics MetricsRecorder
 
-	sem   chan struct{}
-	queue chan struct{}
+	sem    chan struct{}
+	queue  chan struct{}
+	closed atomic.Bool
 
 	inFlight atomic.Uint32
 	denied   atomic.Uint64
@@ -29,11 +30,15 @@ func NewBulkhead(cfg BulkheadConfig) *BulkheadPolicy {
 			cfg.MaxConcurrent = 1
 		}
 	}
+	queueSize := int(cfg.MaxQueue)
+	if queueSize < 1 {
+		queueSize = 1
+	}
 	return &BulkheadPolicy{
 		cfg:    cfg,
 		logger: slog.Default(),
 		sem:    make(chan struct{}, cfg.MaxConcurrent),
-		queue:  make(chan struct{}, cfg.MaxQueue),
+		queue:  make(chan struct{}, queueSize),
 	}
 }
 
@@ -78,7 +83,7 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 
 	select {
 	case b.queue <- struct{}{}:
-		<-b.queue
+		defer func() { <-b.queue }()
 	default:
 		b.deny(req.Method, req.URL.String())
 		return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d",
@@ -90,23 +95,31 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 		timeout = time.Second
 	}
 
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-	select {
-	case b.sem <- struct{}{}:
-		b.inFlight.Add(1)
-		defer func() {
-			<-b.sem
-			b.inFlight.Add(^uint32(0))
-		}()
-		return next(ctx, req)
-	case <-timer.C:
-		b.deny(req.Method, req.URL.String())
-		return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
-			ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, b.cfg.QueueTimeout)
-	case <-ctx.Done():
-		b.deny(req.Method, req.URL.String())
-		return nil, ctx.Err()
+	deadline := time.Now().Add(timeout)
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			b.deny(req.Method, req.URL.String())
+			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, b.cfg.QueueTimeout)
+		}
+
+		select {
+		case b.sem <- struct{}{}:
+			b.inFlight.Add(1)
+			defer func() {
+				<-b.sem
+				b.inFlight.Add(^uint32(0))
+			}()
+			return next(ctx, req)
+		case <-time.After(remaining):
+			b.deny(req.Method, req.URL.String())
+			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, b.cfg.QueueTimeout)
+		case <-ctx.Done():
+			b.deny(req.Method, req.URL.String())
+			return nil, ctx.Err()
+		}
 	}
 }
 
