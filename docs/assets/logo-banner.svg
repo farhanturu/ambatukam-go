@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="Ambatukam Go">
+  <title>Ambatukam Go — Composable, idiomatic Go HTTP resilience</title>
+
+  <defs>
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8F9FA"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+
+    <symbol id="mark" viewBox="0 0 256 256">
+      <polygon points="28,128 78,46 178,46 228,128 178,210 78,210"
+               fill="#00ADD8" stroke="#007D9A" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M 128 96 L 107 158 L 121 158 L 125.5 145 L 130.5 145 L 134.5 158 L 149 158 Z M 128 116 L 132 130 L 124 130 Z"
+            fill="#FFFFFF" fill-rule="evenodd"/>
+      <g fill="none" stroke="#FF6B35" stroke-width="7" stroke-linecap="butt">
+        <path d="M 159.8 96.2 A 45 45 0 0 1 159.8 159.8" marker-end="url(#arrowhead)"/>
+        <path d="M 159.8 96.2 A 45 45 0 0 1 159.8 159.8" marker-end="url(#arrowhead)" transform="rotate(120 128 128)"/>
+        <path d="M 159.8 96.2 A 45 45 0 0 1 159.8 159.8" marker-end="url(#arrowhead)" transform="rotate(240 128 128)"/>
+      </g>
+    </symbol>
+    <marker id="arrowhead" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 0 L 14 7 L 0 14 L 3.5 7 Z" fill="#FF6B35"/>
+    </marker>
+  </defs>
+
+  <!-- Soft background -->
+  <rect x="0" y="0" width="1280" height="320" fill="url(#bg-gradient)"/>
+
+  <!-- Decorative retry arrows on the right (very low opacity) -->
+  <g opacity="0.06" fill="none" stroke="#FF6B35" stroke-width="6" stroke-linecap="butt">
+    <g transform="translate(1100,160)">
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)"/>
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)" transform="rotate(120)"/>
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)" transform="rotate(240)"/>
+    </g>
+    <g transform="translate(1180,160) scale(0.7)">
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)"/>
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)" transform="rotate(120)"/>
+      <path d="M 88.5 -33.8 A 45 45 0 0 1 88.5 33.8" marker-end="url(#arrowhead-deco)" transform="rotate(240)"/>
+    </g>
+  </g>
+  <marker id="arrowhead-deco" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M 0 0 L 14 7 L 0 14 L 3.5 7 Z" fill="#FF6B35"/>
+  </marker>
+
+  <!-- Mark on left, ~240px tall, vertically centered (80,40 -> 320,280) -->
+  <use href="#mark" x="80" y="40" width="240" height="240"/>
+
+  <!-- Wordmark "AMBATUKAM" + "go" suffix -->
+  <g font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900">
+    <text x="360" y="170"
+          font-size="86"
+          letter-spacing="3"
+          fill="#1A1A2E">AMBATUKAM</text>
+    <text x="360" y="170"
+          font-size="48"
+          fill="#00ADD8"
+          dx="510">go</text>
+  </g>
+
+  <!-- Tagline below the wordmark -->
+  <text x="362" y="220"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="500"
+        font-size="22"
+        letter-spacing="0.5"
+        fill="#6B7280">Composable, idiomatic Go HTTP resilience</text>
+</svg>

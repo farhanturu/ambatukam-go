@@ -13,6 +13,7 @@
   <a href="https://github.com/farhanturu/ambatukam-go/actions"><img src="https://github.com/farhanturu/ambatukam-go/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pkg.go.dev/github.com/farhanturu/ambatukam-go"><img src="https://pkg.go.dev/badge/github.com/farhanturu/ambatukam-go.svg" alt="Go Reference"></a>
   <a href="https://goreportcard.com/report/github.com/farhanturu/ambatukam-go"><img src="https://goreportcard.com/badge/github.com/farhanturu/ambatukam-go" alt="Go Report Card"></a>
+  <a href="https://farhanturu.github.io/ambatukam-go"><img src="https://img.shields.io/badge/docs-website-blue.svg" alt="Documentation"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="https://github.com/farhanturu/ambatukam-go/stargazers"><img src="https://img.shields.io/github/stars/farhanturu/ambatukam-go" alt="Stars"></a>
 </p>
@@ -515,6 +516,7 @@ Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transpo
 
 | Document | Description |
 |----------|-------------|
+| [🌐 Website](https://farhanturu.github.io/ambatukam-go) | Interactive documentation website |
 | [README.md](./README.md) | You are here |
 | [COOKBOOK.md](./docs/COOKBOOK.md) | Recipes for common patterns |
 | [FAQ.md](./docs/FAQ.md) | Frequently asked questions |
