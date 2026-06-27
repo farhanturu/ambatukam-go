@@ -9,7 +9,7 @@ import (
 )
 
 type Hooks struct {
-	BeforeRequest func(ctx *http.Request) error
+	BeforeRequest func(req *http.Request) error
 	AfterResponse func(req *http.Request, resp *http.Response, err error)
 	OnRetry       func(req *http.Request, attempt int, nextDelay time.Duration)
 	OnStateChange func(name string, from, to State)
@@ -135,12 +135,6 @@ func WithTimeoutMap(rules map[string]time.Duration) Option {
 		c.policies = append(c.policies, NewTimeoutMap(rules))
 	}
 }
-func WithCustomLogger(l Logger) Option {
-	return func(c *Client) {
-		c.customLogger = l
-	}
-}
-
 func DefaultConfig() []Option {
 	return []Option{
 		WithRetry(RetryConfig{

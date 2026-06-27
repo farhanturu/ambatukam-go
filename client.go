@@ -10,12 +10,11 @@ import (
 )
 
 type Client struct {
-	hc           *http.Client
-	policies     []Policy
-	logger       *slog.Logger
-	customLogger Logger
-	hooks        Hooks
-	metrics      MetricsRecorder
+	hc       *http.Client
+	policies []Policy
+	logger   *slog.Logger
+	hooks    Hooks
+	metrics  MetricsRecorder
 }
 
 func New(opts ...Option) *Client {
@@ -31,10 +30,19 @@ func New(opts ...Option) *Client {
 		switch pp := p.(type) {
 		case *RetryPolicy:
 			pp.WithHooks(c.hooks)
+			pp.WithMetrics(c.metrics)
 		case *CircuitBreakerPolicy:
 			pp.WithHooks(c.hooks)
+			pp.WithMetrics(c.metrics)
 		case *FallbackPolicy:
 			pp.WithHooks(c.hooks)
+			pp.WithMetrics(c.metrics)
+		case *BulkheadPolicy:
+			pp.WithMetrics(c.metrics)
+		case *RateLimitPolicy:
+			pp.WithMetrics(c.metrics)
+		case *TimeoutPolicy:
+			pp.WithMetrics(c.metrics)
 		}
 	}
 	return c

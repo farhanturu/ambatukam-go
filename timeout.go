@@ -11,10 +11,18 @@ import (
 
 type TimeoutPolicy struct {
 	timeout time.Duration
+	metrics MetricsRecorder
 }
 
 func NewTimeout(cfg TimeoutConfig) *TimeoutPolicy {
 	return &TimeoutPolicy{timeout: cfg.Timeout}
+}
+
+func (t *TimeoutPolicy) WithMetrics(m MetricsRecorder) *TimeoutPolicy {
+	if m != nil {
+		t.metrics = m
+	}
+	return t
 }
 
 func (t *TimeoutPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
@@ -27,6 +35,9 @@ func (t *TimeoutPolicy) Execute(ctx context.Context, req *http.Request, next Pol
 	resp, err := next(childCtx, req)
 	if err != nil {
 		if errors.Is(childCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+			if t.metrics != nil {
+				t.metrics.RecordTimeout(req.Method, req.URL.String())
+			}
 			return resp, fmt.Errorf("%w: %v", ErrTimeout, err)
 		}
 		return resp, err
@@ -35,11 +46,19 @@ func (t *TimeoutPolicy) Execute(ctx context.Context, req *http.Request, next Pol
 }
 
 type TimeoutMapPolicy struct {
-	rules map[string]time.Duration
+	rules   map[string]time.Duration
+	metrics MetricsRecorder
 }
 
 func NewTimeoutMap(rules map[string]time.Duration) *TimeoutMapPolicy {
 	return &TimeoutMapPolicy{rules: rules}
+}
+
+func (t *TimeoutMapPolicy) WithMetrics(m MetricsRecorder) *TimeoutMapPolicy {
+	if m != nil {
+		t.metrics = m
+	}
+	return t
 }
 
 func (t *TimeoutMapPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
@@ -53,6 +72,9 @@ func (t *TimeoutMapPolicy) Execute(ctx context.Context, req *http.Request, next 
 	resp, err := next(childCtx, req)
 	if err != nil {
 		if errors.Is(childCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+			if t.metrics != nil {
+				t.metrics.RecordTimeout(req.Method, req.URL.String())
+			}
 			return resp, fmt.Errorf("%w: %v", ErrTimeout, err)
 		}
 		return resp, err

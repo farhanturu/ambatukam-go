@@ -7,13 +7,13 @@ import (
 )
 
 type mockMetricsRecorder struct {
-	requests    int
-	retries     int
-	stateChanges int
-	bulkheadDenied int
+	requests        int
+	retries         int
+	stateChanges    int
+	bulkheadDenied  int
 	rateLimitDenied int
-	fallbacks   int
-	timeouts    int
+	fallbacks       int
+	timeouts        int
 }
 
 func (m *mockMetricsRecorder) RecordRequest(method, url string, status int, duration time.Duration) {

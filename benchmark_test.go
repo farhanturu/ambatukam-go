@@ -172,8 +172,9 @@ func BenchmarkRateLimit_WaitPath(b *testing.B) {
 	srv := fastSrv(b)
 	defer srv.Close()
 	c := ambatukam.New(ambatukam.WithRateLimit(ambatukam.RateLimitConfig{
-		Rate:  1000,
-		Burst: 1,
+		Rate:        1000,
+		Burst:       1,
+		WaitTimeout: 5 * time.Second,
 	}))
 	defer c.Close()
 	ctx := context.Background()

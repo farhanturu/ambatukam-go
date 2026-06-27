@@ -325,7 +325,7 @@ func TestDefaultRetryConfig(t *testing.T) {
 
 func TestRetry_BackoffExponentialBounds(t *testing.T) {
 	const jitter = 0.2
-	bo := ambatukam.ExponentialBackoff(100*time.Millisecond, 1*time.Second, 2.0)
+	bo := ambatukam.ExponentialBackoff(100*time.Millisecond, 1*time.Second, 2.0, 0.2)
 
 	// compare in float64 nanoseconds to avoid time.Duration integer truncation.
 	check := func(attempt int, baseNanos float64) {

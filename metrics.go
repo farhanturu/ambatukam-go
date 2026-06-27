@@ -1,6 +1,7 @@
 package ambatukam
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -23,13 +24,20 @@ type MetricsRecorder interface {
 
 type noopMetricsRecorder struct{}
 
-func (n *noopMetricsRecorder) RecordRequest(method, url string, status int, duration time.Duration) {}
-func (n *noopMetricsRecorder) RecordRetry(method, url string, attempt int)                           {}
-func (n *noopMetricsRecorder) RecordCircuitStateChange(name string, from, to State)                   {}
-func (n *noopMetricsRecorder) RecordBulkheadDenied(method, url string)                                {}
-func (n *noopMetricsRecorder) RecordRateLimitDenied(method, url string)                               {}
-func (n *noopMetricsRecorder) RecordFallback(method, url string)                                      {}
-func (n *noopMetricsRecorder) RecordTimeout(method, url string)                                       {}
+func (n *noopMetricsRecorder) RecordRequest(method, url string, status int, duration time.Duration) {
+}
+func (n *noopMetricsRecorder) RecordRetry(method, url string, attempt int) {
+}
+func (n *noopMetricsRecorder) RecordCircuitStateChange(name string, from, to State) {
+}
+func (n *noopMetricsRecorder) RecordBulkheadDenied(method, url string) {
+}
+func (n *noopMetricsRecorder) RecordRateLimitDenied(method, url string) {
+}
+func (n *noopMetricsRecorder) RecordFallback(method, url string) {
+}
+func (n *noopMetricsRecorder) RecordTimeout(method, url string) {
+}
 
 func NewNoopMetricsRecorder() MetricsRecorder {
 	return &noopMetricsRecorder{}
@@ -63,15 +71,15 @@ type Histogram interface {
 }
 
 type PrometheusConfig struct {
-	RequestsTotal       CounterVec
-	RetriesTotal        CounterVec
-	CircuitState        GaugeVec
-	RequestDuration     HistogramVec
-	BulkheadDenied      CounterVec
-	RateLimitDenied     CounterVec
-	FallbacksTotal      CounterVec
-	TimeoutsTotal       CounterVec
-	CircuitTransitions  CounterVec
+	RequestsTotal      CounterVec
+	RetriesTotal       CounterVec
+	CircuitState       GaugeVec
+	RequestDuration    HistogramVec
+	BulkheadDenied     CounterVec
+	RateLimitDenied    CounterVec
+	FallbacksTotal     CounterVec
+	TimeoutsTotal      CounterVec
+	CircuitTransitions CounterVec
 }
 
 type PrometheusRecorder struct {
@@ -84,7 +92,7 @@ func NewPrometheusRecorder(cfg PrometheusConfig) *PrometheusRecorder {
 
 func (r *PrometheusRecorder) RecordRequest(method, url string, status int, duration time.Duration) {
 	if r.cfg.RequestsTotal != nil {
-		r.cfg.RequestsTotal.WithLabelValues(method, url, statusToString(status)).Inc()
+		r.cfg.RequestsTotal.WithLabelValues(method, url, strconv.Itoa(status)).Inc()
 	}
 	if r.cfg.RequestDuration != nil {
 		r.cfg.RequestDuration.WithLabelValues(method, url).Observe(duration.Seconds())
@@ -93,7 +101,7 @@ func (r *PrometheusRecorder) RecordRequest(method, url string, status int, durat
 
 func (r *PrometheusRecorder) RecordRetry(method, url string, attempt int) {
 	if r.cfg.RetriesTotal != nil {
-		r.cfg.RetriesTotal.WithLabelValues(method, url, intToString(attempt)).Inc()
+		r.cfg.RetriesTotal.WithLabelValues(method, url, strconv.Itoa(attempt)).Inc()
 	}
 }
 
@@ -128,28 +136,6 @@ func (r *PrometheusRecorder) RecordTimeout(method, url string) {
 	if r.cfg.TimeoutsTotal != nil {
 		r.cfg.TimeoutsTotal.WithLabelValues(method, url).Inc()
 	}
-}
-
-func statusToString(status int) string {
-	if status == 0 {
-		return "0"
-	}
-	return intToString(status)
-}
-
-func intToString(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	if n < 0 {
-		return "-" + intToString(-n)
-	}
-	digits := ""
-	for n > 0 {
-		digits = string(rune('0'+n%10)) + digits
-		n /= 10
-	}
-	return digits
 }
 
 func stateToFloat(s State) float64 {

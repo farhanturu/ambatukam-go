@@ -1,6 +1,7 @@
 package ambatukam
 
 import (
+	"math"
 	"math/rand"
 	"time"
 )
@@ -19,7 +20,7 @@ func (e *expBackoff) NextDelay(attempt int) time.Duration {
 	if attempt < 0 {
 		attempt = 0
 	}
-	d := float64(e.initial) * pow(e.multiplier, float64(attempt))
+	d := float64(e.initial) * math.Pow(e.multiplier, float64(attempt))
 	if d > float64(e.max) {
 		d = float64(e.max)
 	}
@@ -33,8 +34,8 @@ func (e *expBackoff) NextDelay(attempt int) time.Duration {
 	return time.Duration(d)
 }
 
-func ExponentialBackoff(initial, max time.Duration, multiplier float64) Backoff {
-	return &expBackoff{initial: initial, max: max, multiplier: multiplier, jitter: 0.2}
+func ExponentialBackoff(initial, max time.Duration, multiplier, jitter float64) Backoff {
+	return &expBackoff{initial: initial, max: max, multiplier: multiplier, jitter: jitter}
 }
 
 type constBackoff struct{ d time.Duration }
@@ -61,16 +62,4 @@ func (l *linearBackoff) NextDelay(attempt int) time.Duration {
 
 func LinearBackoff(initial, max, step time.Duration) Backoff {
 	return &linearBackoff{initial: initial, max: max, step: step}
-}
-
-func pow(base float64, exp float64) float64 {
-	result := 1.0
-	n := int(exp)
-	if n < 0 {
-		return 1.0 / pow(base, -exp)
-	}
-	for i := 0; i < n; i++ {
-		result *= base
-	}
-	return result
 }

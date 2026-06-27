@@ -18,10 +18,11 @@ const (
 )
 
 type CircuitBreakerPolicy struct {
-	cfg    CircuitConfig
-	logger *slog.Logger
-	hooks  Hooks
-	name   string
+	cfg     CircuitConfig
+	logger  *slog.Logger
+	hooks   Hooks
+	metrics MetricsRecorder
+	name    string
 
 	mu               sync.RWMutex
 	state            State
@@ -72,6 +73,13 @@ func (cb *CircuitBreakerPolicy) WithHooks(h Hooks) *CircuitBreakerPolicy {
 	return cb
 }
 
+func (cb *CircuitBreakerPolicy) WithMetrics(m MetricsRecorder) *CircuitBreakerPolicy {
+	if m != nil {
+		cb.metrics = m
+	}
+	return cb
+}
+
 func (cb *CircuitBreakerPolicy) WithName(name string) *CircuitBreakerPolicy {
 	if name != "" {
 		cb.name = name
@@ -119,6 +127,9 @@ func (cb *CircuitBreakerPolicy) allowRequest() (bool, uint64) {
 				)
 				if cb.hooks.OnStateChange != nil {
 					cb.hooks.OnStateChange(cb.name, StateOpen, StateHalfOpen)
+				}
+				if cb.metrics != nil {
+					cb.metrics.RecordCircuitStateChange(cb.name, StateOpen, StateHalfOpen)
 				}
 			}
 			gen := cb.generation.Load()
@@ -173,6 +184,9 @@ func (cb *CircuitBreakerPolicy) onSuccess(genAtEntry uint64) {
 			if cb.hooks.OnStateChange != nil {
 				cb.hooks.OnStateChange(cb.name, StateHalfOpen, StateClosed)
 			}
+			if cb.metrics != nil {
+				cb.metrics.RecordCircuitStateChange(cb.name, StateHalfOpen, StateClosed)
+			}
 		}
 	}
 	cb.mu.Unlock()
@@ -197,6 +211,9 @@ func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
 				if cb.hooks.OnStateChange != nil {
 					cb.hooks.OnStateChange(cb.name, StateClosed, StateOpen)
 				}
+				if cb.metrics != nil {
+					cb.metrics.RecordCircuitStateChange(cb.name, StateClosed, StateOpen)
+				}
 			}
 		case StateHalfOpen:
 			cb.halfOpenInFlight--
@@ -208,6 +225,9 @@ func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
 			cb.logger.Warn("circuit: half-open -> open (trial failed)")
 			if cb.hooks.OnStateChange != nil {
 				cb.hooks.OnStateChange(cb.name, StateHalfOpen, StateOpen)
+			}
+			if cb.metrics != nil {
+				cb.metrics.RecordCircuitStateChange(cb.name, StateHalfOpen, StateOpen)
 			}
 		}
 	}

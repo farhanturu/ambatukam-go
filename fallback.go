@@ -2,12 +2,14 @@ package ambatukam
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 )
 
 type FallbackPolicy struct {
 	handler func(req *http.Request, err error) (*http.Response, error)
 	hooks   Hooks
+	metrics MetricsRecorder
 }
 
 func NewFallback(cfg FallbackConfig) *FallbackPolicy {
@@ -16,6 +18,13 @@ func NewFallback(cfg FallbackConfig) *FallbackPolicy {
 
 func (f *FallbackPolicy) WithHooks(h Hooks) *FallbackPolicy {
 	f.hooks = h
+	return f
+}
+
+func (f *FallbackPolicy) WithMetrics(m MetricsRecorder) *FallbackPolicy {
+	if m != nil {
+		f.metrics = m
+	}
 	return f
 }
 
@@ -28,6 +37,9 @@ func (f *FallbackPolicy) Execute(ctx context.Context, req *http.Request, next Po
 	if f.hooks.OnFallback != nil {
 		f.hooks.OnFallback(req, err)
 	}
+	if f.metrics != nil {
+		f.metrics.RecordFallback(req.Method, req.URL.String())
+	}
 
 	fallbackResp, fallbackErr := f.handler(req, err)
 	if fallbackErr != nil {
@@ -36,7 +48,7 @@ func (f *FallbackPolicy) Execute(ctx context.Context, req *http.Request, next Po
 			URL:      req.URL.String(),
 			Policy:   "fallback",
 			Attempts: 1,
-			Err:      ErrFallback,
+			Err:      fmt.Errorf("%w: %w", ErrFallback, fallbackErr),
 		}
 	}
 	return fallbackResp, nil

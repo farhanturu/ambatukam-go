@@ -10,7 +10,7 @@ type mockCounter struct {
 	value float64
 }
 
-func (c *mockCounter) Inc()         { c.value++ }
+func (c *mockCounter) Inc()          { c.value++ }
 func (c *mockCounter) Add(v float64) { c.value += v }
 
 type mockGauge struct {
@@ -238,44 +238,6 @@ func TestStateToFloat(t *testing.T) {
 		got := stateToFloat(tt.state)
 		if got != tt.want {
 			t.Errorf("stateToFloat(%s) = %f, want %f", tt.state, got, tt.want)
-		}
-	}
-}
-
-func TestIntToString(t *testing.T) {
-	tests := []struct {
-		input int
-		want  string
-	}{
-		{0, "0"},
-		{1, "1"},
-		{123, "123"},
-		{-1, "-1"},
-	}
-
-	for _, tt := range tests {
-		got := intToString(tt.input)
-		if got != tt.want {
-			t.Errorf("intToString(%d) = %s, want %s", tt.input, got, tt.want)
-		}
-	}
-}
-
-func TestStatusToString(t *testing.T) {
-	tests := []struct {
-		input int
-		want  string
-	}{
-		{0, "0"},
-		{200, "200"},
-		{404, "404"},
-		{500, "500"},
-	}
-
-	for _, tt := range tests {
-		got := statusToString(tt.input)
-		if got != tt.want {
-			t.Errorf("statusToString(%d) = %s, want %s", tt.input, got, tt.want)
 		}
 	}
 }

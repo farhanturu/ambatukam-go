@@ -1,7 +1,9 @@
 package ambatukam
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"sync"
 )
@@ -12,9 +14,10 @@ type SingleflightPolicy struct {
 }
 
 type singleflightCall struct {
-	wg  sync.WaitGroup
-	val *http.Response
-	err error
+	wg        sync.WaitGroup
+	val       *http.Response
+	bodyBytes []byte
+	err       error
 }
 
 func NewSingleflight() *SingleflightPolicy {
@@ -28,7 +31,13 @@ func (sf *SingleflightPolicy) Execute(ctx context.Context, req *http.Request, ne
 	if c, ok := sf.calls[key]; ok {
 		sf.mu.Unlock()
 		c.wg.Wait()
-		return c.val, c.err
+		if c.err != nil {
+			return nil, c.err
+		}
+		clone := *c.val
+		clone.Body = io.NopCloser(bytes.NewReader(c.bodyBytes))
+		clone.ContentLength = int64(len(c.bodyBytes))
+		return &clone, nil
 	}
 
 	c := &singleflightCall{}
@@ -37,11 +46,25 @@ func (sf *SingleflightPolicy) Execute(ctx context.Context, req *http.Request, ne
 	sf.mu.Unlock()
 
 	c.val, c.err = next(ctx, req)
+
+	if c.val != nil && c.val.Body != nil && c.err == nil {
+		c.bodyBytes, _ = io.ReadAll(c.val.Body)
+		c.val.Body.Close()
+		c.val.Body = io.NopCloser(bytes.NewReader(c.bodyBytes))
+		c.val.ContentLength = int64(len(c.bodyBytes))
+	}
+
 	c.wg.Done()
 
 	sf.mu.Lock()
 	delete(sf.calls, key)
 	sf.mu.Unlock()
 
-	return c.val, c.err
+	if c.err != nil {
+		return nil, c.err
+	}
+	clone := *c.val
+	clone.Body = io.NopCloser(bytes.NewReader(c.bodyBytes))
+	clone.ContentLength = int64(len(c.bodyBytes))
+	return &clone, nil
 }

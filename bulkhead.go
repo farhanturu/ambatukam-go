@@ -11,8 +11,9 @@ import (
 )
 
 type BulkheadPolicy struct {
-	cfg    BulkheadConfig
-	logger *slog.Logger
+	cfg     BulkheadConfig
+	logger  *slog.Logger
+	metrics MetricsRecorder
 
 	sem   chan struct{}
 	queue chan struct{}
@@ -43,6 +44,20 @@ func (b *BulkheadPolicy) WithLogger(l *slog.Logger) *BulkheadPolicy {
 	return b
 }
 
+func (b *BulkheadPolicy) WithMetrics(m MetricsRecorder) *BulkheadPolicy {
+	if m != nil {
+		b.metrics = m
+	}
+	return b
+}
+
+func (b *BulkheadPolicy) deny(method, url string) {
+	b.denied.Add(1)
+	if b.metrics != nil {
+		b.metrics.RecordBulkheadDenied(method, url)
+	}
+}
+
 func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
 	select {
 	case b.sem <- struct{}{}:
@@ -56,7 +71,7 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 	}
 
 	if b.cfg.MaxQueue == 0 {
-		b.denied.Add(1)
+		b.deny(req.Method, req.URL.String())
 		return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d",
 			ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue)
 	}
@@ -65,7 +80,7 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 	case b.queue <- struct{}{}:
 		<-b.queue
 	default:
-		b.denied.Add(1)
+		b.deny(req.Method, req.URL.String())
 		return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d",
 			ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue)
 	}
@@ -86,11 +101,11 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 		}()
 		return next(ctx, req)
 	case <-timer.C:
-		b.denied.Add(1)
+		b.deny(req.Method, req.URL.String())
 		return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
 			ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, b.cfg.QueueTimeout)
 	case <-ctx.Done():
-		b.denied.Add(1)
+		b.deny(req.Method, req.URL.String())
 		return nil, ctx.Err()
 	}
 }

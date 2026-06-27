@@ -71,7 +71,7 @@ func ExampleClient_Post() {
 func ExampleNewRetry() {
 	cfg := ambatukam.DefaultRetryConfig()
 	cfg.MaxRetries = 5
-	cfg.Backoff = ambatukam.ExponentialBackoff(50*time.Millisecond, time.Second, 2.0)
+	cfg.Backoff = ambatukam.ExponentialBackoff(50*time.Millisecond, time.Second, 2.0, 0.2)
 
 	client := ambatukam.New(ambatukam.WithRetry(cfg))
 	defer client.Close()

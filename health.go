@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"runtime"
+	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,12 +25,42 @@ type MemoryStats struct {
 }
 
 type HealthChecker struct {
-	client  *Client
-	started time.Time
+	client     *Client
+	started    time.Time
+	memStats   atomic.Pointer[runtime.MemStats]
+	memUpdated atomic.Int64
+	stopCh     chan struct{}
 }
 
 func NewHealthChecker(c *Client) *HealthChecker {
-	return &HealthChecker{client: c, started: time.Now()}
+	h := &HealthChecker{client: c, started: time.Now(), stopCh: make(chan struct{})}
+	h.refreshMemStats()
+	go h.refreshMemStatsLoop()
+	return h
+}
+
+func (h *HealthChecker) refreshMemStats() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	h.memStats.Store(&m)
+	h.memUpdated.Store(time.Now().UnixNano())
+}
+
+func (h *HealthChecker) refreshMemStatsLoop() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-h.stopCh:
+			return
+		case <-ticker.C:
+			h.refreshMemStats()
+		}
+	}
+}
+
+func (h *HealthChecker) Close() {
+	close(h.stopCh)
 }
 
 func (h *HealthChecker) Handler() http.HandlerFunc {
@@ -43,8 +75,7 @@ func (h *HealthChecker) Handler() http.HandlerFunc {
 }
 
 func (h *HealthChecker) getStatus() HealthStatus {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
+	m := h.memStats.Load()
 
 	policies := make(map[string]string)
 	for _, p := range h.client.policies {
@@ -52,8 +83,8 @@ func (h *HealthChecker) getStatus() HealthStatus {
 		case *CircuitBreakerPolicy:
 			policies["circuit_breaker"] = string(pp.State())
 		case *BulkheadPolicy:
-			policies["bulkhead_in_flight"] = formatUint32(pp.InFlight())
-			policies["bulkhead_denied"] = formatUint64(pp.Denied())
+			policies["bulkhead_in_flight"] = strconv.FormatUint(uint64(pp.InFlight()), 10)
+			policies["bulkhead_denied"] = strconv.FormatUint(uint64(pp.Denied()), 10)
 		}
 	}
 
@@ -65,24 +96,21 @@ func (h *HealthChecker) getStatus() HealthStatus {
 		}
 	}
 
+	var memStats MemoryStats
+	if m != nil {
+		memStats = MemoryStats{
+			Alloc:      m.Alloc,
+			TotalAlloc: m.TotalAlloc,
+			Sys:        m.Sys,
+			NumGC:      m.NumGC,
+		}
+	}
+
 	return HealthStatus{
 		Status:    status,
 		Timestamp: time.Now(),
 		Uptime:    time.Since(h.started),
 		Policies:  policies,
-		Memory: MemoryStats{
-			Alloc:      m.Alloc,
-			TotalAlloc: m.TotalAlloc,
-			Sys:        m.Sys,
-			NumGC:      m.NumGC,
-		},
+		Memory:    memStats,
 	}
-}
-
-func formatUint32(v uint32) string {
-	return string(rune(v + 48))
-}
-
-func formatUint64(v uint64) string {
-	return string(rune(v + 48))
 }

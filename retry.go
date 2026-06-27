@@ -17,6 +17,7 @@ type RetryPolicy struct {
 	backoff Backoff
 	logger  *slog.Logger
 	hooks   Hooks
+	metrics MetricsRecorder
 }
 
 func DefaultRetryConfig() RetryConfig {
@@ -50,7 +51,7 @@ func applyRetryDefaults(cfg RetryConfig) RetryConfig {
 		cfg.Jitter = 1
 	}
 	if cfg.Backoff == nil {
-		cfg.Backoff = ExponentialBackoff(cfg.InitialBackoff, cfg.MaxBackoff, cfg.Multiplier)
+		cfg.Backoff = ExponentialBackoff(cfg.InitialBackoff, cfg.MaxBackoff, cfg.Multiplier, cfg.Jitter)
 	}
 	return cfg
 }
@@ -69,6 +70,13 @@ func (r *RetryPolicy) WithLogger(l *slog.Logger) *RetryPolicy {
 
 func (r *RetryPolicy) WithHooks(h Hooks) *RetryPolicy {
 	r.hooks = h
+	return r
+}
+
+func (r *RetryPolicy) WithMetrics(m MetricsRecorder) *RetryPolicy {
+	if m != nil {
+		r.metrics = m
+	}
 	return r
 }
 
@@ -121,6 +129,9 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 
 		if r.hooks.OnRetry != nil {
 			r.hooks.OnRetry(req, attempt, delay)
+		}
+		if r.metrics != nil {
+			r.metrics.RecordRetry(req.Method, req.URL.String(), attempt+1)
 		}
 
 		r.logger.Debug("retry: backing off",
