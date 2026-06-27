@@ -3,70 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ambatukam Go — Zero-Dependency HTTP Resilience Library</title>
+    <title>Ambatukam Go — Zero-Dependency HTTP Resilience</title>
     <meta name="description" content="Composable, idiomatic Go HTTP resilience — Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check. Zero dependencies.">
-    <meta name="keywords" content="go, golang, http client, resilience, retry, circuit breaker, bulkhead, rate limiter, timeout, fallback, singleflight">
-    <meta property="og:title" content="Ambatukam Go — Zero-Dependency HTTP Resilience Library">
-    <meta property="og:description" content="Composable, idiomatic Go HTTP resilience. One API, zero dependencies, production-grade.">
-    <meta property="og:image" content="assets/logo-banner.svg">
-    <meta property="og:url" content="https://farhanturu.github.io/ambatukam-go">
     <link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
+    <div class="noise"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+
+    <nav class="navbar" id="navbar">
+        <div class="nav-pill">
             <a href="#" class="logo">
-                <img src="assets/logo-icon.svg" alt="Ambatukam Go" width="32" height="32">
-                <span>Ambatukam Go</span>
+                <img src="assets/logo-icon.svg" alt="Ambatukam Go" width="28" height="28">
+                <span>Ambatukam</span>
             </a>
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#quickstart">Quick Start</a>
                 <a href="#examples">Examples</a>
-                <a href="#comparison">Comparison</a>
-                <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="github-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    GitHub
-                </a>
+                <a href="#comparison">Compare</a>
             </div>
-            <button class="mobile-menu" onclick="toggleMenu()">
-                <span></span>
+            <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="nav-github">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+            <button class="hamburger" id="hamburger" onclick="toggleMenu()">
                 <span></span>
                 <span></span>
             </button>
         </div>
     </nav>
 
-    <header class="hero">
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-content">
+            <a href="#features" onclick="closeMenu()">Features</a>
+            <a href="#quickstart" onclick="closeMenu()">Quick Start</a>
+            <a href="#examples" onclick="closeMenu()">Examples</a>
+            <a href="#comparison" onclick="closeMenu()">Compare</a>
+            <a href="https://github.com/farhanturu/ambatukam-go" target="_blank">GitHub</a>
+        </div>
+    </div>
+
+    <header class="hero" id="hero">
         <div class="container">
             <div class="hero-content">
-                <div class="hero-badge">v1.2.0 — Zero Dependencies</div>
-                <h1>Your Go HTTP client<br>just got <span class="gradient-text">superpowers</span></h1>
-                <p>Composable, idiomatic Go HTTP resilience. Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check — one API, zero deps.</p>
-                <div class="hero-buttons">
-                    <a href="#quickstart" class="btn btn-primary">Get Started</a>
-                    <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="btn btn-secondary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                        </svg>
-                        View on GitHub
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    v1.2.0 — Zero Dependencies
+                </div>
+                <h1 class="hero-title">
+                    <span class="title-line">Your Go HTTP</span>
+                    <span class="title-line title-accent">client just got</span>
+                    <span class="title-line title-gradient">superpowers</span>
+                </h1>
+                <p class="hero-desc">Composable, idiomatic Go HTTP resilience. Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check — one API, zero deps.</p>
+                <div class="hero-actions">
+                    <a href="#quickstart" class="btn btn-primary">
+                        <span>Get Started</span>
+                        <span class="btn-icon">→</span>
+                    </a>
+                    <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="btn btn-ghost">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <span>Star on GitHub</span>
                     </a>
                 </div>
                 <div class="hero-install">
                     <code>go get github.com/farhanturu/ambatukam-go</code>
-                    <button onclick="copyInstall()" class="copy-btn" title="Copy to clipboard">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
+                    <button onclick="copyInstall()" class="copy-btn" id="copyBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
                 </div>
+            </div>
+            <div class="hero-visual">
+                <div class="code-float">
+                    <div class="code-float-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <pre><code><span class="kw">client</span> := ambatukam.<span class="fn">New</span>(
+    ambatukam.<span class="fn">WithRetry</span>(...),
+    ambatukam.<span class="fn">WithCircuitBreaker</span>(...),
+    ambatukam.<span class="fn">WithBulkhead</span>(...),
+    ambatukam.<span class="fn">WithRateLimit</span>(...),
+    ambatukam.<span class="fn">WithFallback</span>(...),
+)</code></pre>
+                </div>
+                <div class="orbit orbit-1"><div class="orbit-dot"></div></div>
+                <div class="orbit orbit-2"><div class="orbit-dot"></div></div>
+                <div class="orbit orbit-3"><div class="orbit-dot"></div></div>
             </div>
         </div>
     </header>
@@ -74,21 +104,23 @@
     <section class="stats">
         <div class="container">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">10+</div>
+                <div class="stat-item">
+                    <div class="stat-value" data-count="10">0</div>
+                    <div class="stat-plus">+</div>
                     <div class="stat-label">Resilience Patterns</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">0</div>
+                <div class="stat-item">
+                    <div class="stat-value" data-count="0">0</div>
                     <div class="stat-label">External Dependencies</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">100+</div>
+                <div class="stat-item">
+                    <div class="stat-value" data-count="100">0</div>
+                    <div class="stat-plus">+</div>
                     <div class="stat-label">Tests with Race Detector</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">MIT</div>
-                    <div class="stat-label">License</div>
+                <div class="stat-item">
+                    <div class="stat-value stat-text">MIT</div>
+                    <div class="stat-label">Open Source License</div>
                 </div>
             </div>
         </div>
@@ -97,69 +129,87 @@
     <section id="features" class="features">
         <div class="container">
             <div class="section-header">
-                <h2>Everything you need for <span class="gradient-text">production-grade</span> HTTP</h2>
+                <span class="eyebrow">Features</span>
+                <h2>Everything for <span class="text-gradient">production-grade</span> HTTP</h2>
                 <p>One library replaces 3-5 different packages. Zero dependencies, one consistent API.</p>
             </div>
             <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Retry with Backoff</h3>
-                    <p>Exponential, constant, or linear backoff with automatic jitter. POST bodies are automatically buffered for safe retry.</p>
+                <div class="feature-card card-large">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Retry with Backoff</h3>
+                        <p>Exponential, constant, or linear backoff with automatic jitter. POST bodies are automatically buffered for safe retry. Supports Retry-After headers.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Circuit Breaker</h3>
-                    <p>Three-state machine — closed, open, half-open. Race-safe with sync.RWMutex for better read concurrency.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Circuit Breaker</h3>
+                        <p>Three-state machine — closed, open, half-open. Race-safe with sync.RWMutex for better read concurrency.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🚧</div>
-                    <h3>Bulkhead</h3>
-                    <p>Limit concurrent requests to downstream services. Optional bounded queue with timeout to prevent cascading failures.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🚧</div>
+                        <h3>Bulkhead</h3>
+                        <p>Limit concurrent requests to downstream services. Optional bounded queue with timeout.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🚦</div>
-                    <h3>Rate Limiter</h3>
-                    <p>Token bucket implementation. Can wait for a token or fail fast. Perfect for respecting API quotas.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🚦</div>
+                        <h3>Rate Limiter</h3>
+                        <p>Token bucket implementation. Can wait for a token or fail fast. Perfect for API quotas.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card card-large">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">⏱️</div>
+                        <h3>Timeout Map</h3>
+                        <p>Different timeouts for different URL patterns. Supports wildcards for flexible per-endpoint configuration. Set 10s for payments, 5s for users, 1s for health checks.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⏱️</div>
-                    <h3>Timeout Map</h3>
-                    <p>Different timeouts for different URL patterns. Supports wildcards for flexible per-endpoint configuration.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🛟</div>
+                        <h3>Fallback</h3>
+                        <p>Return a cached response or friendly error when everything fails.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🛟</div>
-                    <h3>Fallback</h3>
-                    <p>Return a cached response or friendly error when everything fails. Never leave your users hanging.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🔗</div>
+                        <h3>Singleflight</h3>
+                        <p>Deduplicate concurrent requests. 10 goroutines = 1 HTTP call.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔗</div>
-                    <h3>Singleflight</h3>
-                    <p>Deduplicate identical concurrent requests. 10 goroutines requesting the same data = 1 HTTP call.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">📊</div>
+                        <h3>Prometheus</h3>
+                        <p>Full Prometheus integration with Counter, Gauge, Histogram vectors.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Prometheus Metrics</h3>
-                    <p>Full Prometheus integration with Counter, Gauge, Histogram vectors. Track requests, retries, circuit state, and more.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🏥</div>
+                        <h3>Health Check</h3>
+                        <p>Built-in /health endpoint with policy status, memory stats, uptime.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🏥</div>
-                    <h3>Health Check</h3>
-                    <p>Built-in /health endpoint that reports circuit breaker state, bulkhead usage, memory stats, and uptime.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">📝</div>
+                        <h3>Custom Logger</h3>
+                        <p>Implement Logger interface for zerolog, zap, or any logging library.</p>
+                    </div></div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Custom Logger</h3>
-                    <p>Implement Logger interface for zerolog, zap, or any logging library. Not locked to slog.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏷️</div>
-                    <h3>Request ID</h3>
-                    <p>Auto-generate or propagate X-Request-ID header for distributed tracing and log correlation.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🪝</div>
-                    <h3>5 Hooks</h3>
-                    <p>BeforeRequest, AfterResponse, OnRetry, OnStateChange, OnFallback. Full observability at every step.</p>
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🪝</div>
+                        <h3>5 Hooks</h3>
+                        <p>BeforeRequest, AfterResponse, OnRetry, OnStateChange, OnFallback.</p>
+                    </div></div>
                 </div>
             </div>
         </div>
@@ -168,74 +218,59 @@
     <section id="quickstart" class="quickstart">
         <div class="container">
             <div class="section-header">
-                <h2>Get started in <span class="gradient-text">30 seconds</span></h2>
-                <p>Install the package and you're ready to go. No configuration required.</p>
+                <span class="eyebrow">Quick Start</span>
+                <h2>Get started in <span class="text-gradient">30 seconds</span></h2>
+                <p>Install the package and you're ready to go.</p>
             </div>
-            <div class="quickstart-grid">
-                <div class="quickstart-step">
-                    <div class="step-number">1</div>
-                    <h3>Install</h3>
-                    <div class="code-block">
-                        <pre><code>go get github.com/farhanturu/ambatukam-go</code></pre>
+            <div class="quickstart-steps">
+                <div class="step">
+                    <div class="step-num">01</div>
+                    <div class="step-content">
+                        <h3>Install the package</h3>
+                        <div class="code-block"><pre><code>go get github.com/farhanturu/ambatukam-go</code></pre></div>
                     </div>
                 </div>
-                <div class="quickstart-step">
-                    <div class="step-number">2</div>
-                    <h3>Create Client</h3>
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
+                <div class="step">
+                    <div class="step-num">02</div>
+                    <div class="step-content">
+                        <h3>Create a resilient client</h3>
+                        <div class="code-block"><pre><code><span class="kw">package</span> main
 
-<span class="keyword">import</span> (
-    <span class="string">"context"</span>
-    <span class="string">"fmt"</span>
-    <span class="string">"log"</span>
-    <span class="string">"time"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"fmt"</span>
+    <span class="str">"log"</span>
+    <span class="str">"time"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="number">2</span> * time.Second}),
-        ambatukam.<span class="function">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="number">3</span>}),
-        ambatukam.<span class="function">WithCircuitBreaker</span>(ambatukam.CircuitConfig{FailureThreshold: <span class="number">5</span>}),
-        ambatukam.<span class="function">WithBulkhead</span>(ambatukam.BulkheadConfig{MaxConcurrent: <span class="number">10</span>}),
-        ambatukam.<span class="function">WithRateLimit</span>(ambatukam.RateLimitConfig{Rate: <span class="number">10</span>, Burst: <span class="number">5</span>}),
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="num">2</span> * time.Second}),
+        ambatukam.<span class="fn">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="num">3</span>}),
+        ambatukam.<span class="fn">WithCircuitBreaker</span>(ambatukam.CircuitConfig{FailureThreshold: <span class="num">5</span>}),
+        ambatukam.<span class="fn">WithBulkhead</span>(ambatukam.BulkheadConfig{MaxConcurrent: <span class="num">10</span>}),
+        ambatukam.<span class="fn">WithRateLimit</span>(ambatukam.RateLimitConfig{Rate: <span class="num">10</span>, Burst: <span class="num">5</span>}),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    resp, err := client.<span class="function">Get</span>(context.<span class="function">Background</span>(), <span class="string">"https://api.example.com/users"</span>)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Fatal</span>(err)
-    }
-    <span class="keyword">defer</span> resp.Body.<span class="function">Close</span>()
-    fmt.<span class="function">Println</span>(<span class="string">"status:"</span>, resp.StatusCode)
-}</code></pre>
+    resp, err := client.<span class="fn">Get</span>(context.<span class="fn">Background</span>(), <span class="str">"https://api.example.com/users"</span>)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    <span class="kw">defer</span> resp.Body.<span class="fn">Close</span>()
+    fmt.<span class="fn">Println</span>(<span class="str">"status:"</span>, resp.StatusCode)
+}</code></pre></div>
                     </div>
                 </div>
-                <div class="quickstart-step">
-                    <div class="step-number">3</div>
-                    <h3>That's it!</h3>
-                    <div class="quickstart-result">
-                        <div class="result-item">
-                            <span class="check">✅</span>
-                            <span>Auto-retry with exponential backoff</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="check">✅</span>
-                            <span>Circuit opens when service is down</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="check">✅</span>
-                            <span>Concurrency limited to 10</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="check">✅</span>
-                            <span>Rate limited to 10 req/s</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="check">✅</span>
-                            <span>Timeout per attempt</span>
+                <div class="step">
+                    <div class="step-num">03</div>
+                    <div class="step-content">
+                        <h3>You're production-ready</h3>
+                        <div class="checklist">
+                            <div class="check-item"><span class="check-icon">✓</span> Auto-retry with exponential backoff</div>
+                            <div class="check-item"><span class="check-icon">✓</span> Circuit opens when service is down</div>
+                            <div class="check-item"><span class="check-icon">✓</span> Concurrency limited to 10</div>
+                            <div class="check-item"><span class="check-icon">✓</span> Rate limited to 10 req/s</div>
+                            <div class="check-item"><span class="check-icon">✓</span> Timeout per attempt</div>
                         </div>
                     </div>
                 </div>
@@ -246,303 +281,215 @@
     <section id="examples" class="examples">
         <div class="container">
             <div class="section-header">
-                <h2>Real-world <span class="gradient-text">examples</span></h2>
+                <span class="eyebrow">Examples</span>
+                <h2>Real-world <span class="text-gradient">patterns</span></h2>
                 <p>Common patterns for production applications.</p>
             </div>
             <div class="examples-tabs">
-                <button class="tab active" onclick="showExample('stripe')">Stripe Payment</button>
-                <button class="tab" onclick="showExample('microservice')">Microservice</button>
-                <button class="tab" onclick="showExample('ratelimit')">Rate Limited API</button>
-                <button class="tab" onclick="showExample('prometheus')">Prometheus</button>
-                <button class="tab" onclick="showExample('json')">JSON Helpers</button>
-                <button class="tab" onclick="showExample('preset')">Preset Configs</button>
+                <button class="tab active" onclick="showExample('stripe', this)">Stripe</button>
+                <button class="tab" onclick="showExample('micro', this)">Microservice</button>
+                <button class="tab" onclick="showExample('ratelimit', this)">Rate Limit</button>
+                <button class="tab" onclick="showExample('prom', this)">Prometheus</button>
+                <button class="tab" onclick="showExample('json', this)">JSON</button>
+                <button class="tab" onclick="showExample('preset', this)">Presets</button>
             </div>
-            <div class="example-content">
-                <div id="stripe" class="example-panel active">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
+            <div class="examples-panels">
+                <div id="stripe" class="panel active"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-<span class="keyword">import</span> (
-    <span class="string">"context"</span>
-    <span class="string">"errors"</span>
-    <span class="string">"log"</span>
-    <span class="string">"strings"</span>
-    <span class="string">"time"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"errors"</span>
+    <span class="str">"log"</span>
+    <span class="str">"strings"</span>
+    <span class="str">"time"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    stripeKey := <span class="string">"sk_test_xxx"</span>
-
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="number">10</span> * time.Second}),
-        ambatukam.<span class="function">WithRetry</span>(ambatukam.RetryConfig{
-            MaxRetries:     <span class="number">3</span>,
-            InitialBackoff: <span class="number">500</span> * time.Millisecond,
-            MaxBackoff:     <span class="number">5</span> * time.Second,
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="num">10</span> * time.Second}),
+        ambatukam.<span class="fn">WithRetry</span>(ambatukam.RetryConfig{
+            MaxRetries: <span class="num">3</span>,
+            Backoff:    ambatukam.<span class="fn">ConstantBackoff</span>(<span class="num">500</span> * time.Millisecond),
         }),
-        ambatukam.<span class="function">WithCircuitBreaker</span>(ambatukam.CircuitConfig{
-            FailureThreshold: <span class="number">5</span>,
-            OpenDuration:     <span class="number">30</span> * time.Second,
-        }),
-        ambatukam.<span class="function">WithFallback</span>(ambatukam.FallbackConfig{
-            Handler: <span class="keyword">func</span>(req *http.Request, err error) (*http.Response, error) {
-                <span class="keyword">return</span> <span class="keyword">nil</span>, errors.<span class="function">New</span>(<span class="string">"payment service unavailable"</span>)
+        ambatukam.<span class="fn">WithCircuitBreaker</span>(ambatukam.CircuitConfig{FailureThreshold: <span class="num">5</span>}),
+        ambatukam.<span class="fn">WithFallback</span>(ambatukam.FallbackConfig{
+            Handler: <span class="kw">func</span>(req *http.Request, err error) (*http.Response, error) {
+                <span class="kw">return</span> <span class="kw">nil</span>, errors.<span class="fn">New</span>(<span class="str">"payment service unavailable"</span>)
             },
         }),
-        ambatukam.<span class="function">WithHooks</span>(ambatukam.Hooks{
-            BeforeRequest: <span class="keyword">func</span>(req *http.Request) error {
-                req.Header.<span class="function">Set</span>(<span class="string">"Authorization"</span>, <span class="string">"Bearer "</span>+stripeKey)
-                req.Header.<span class="function">Set</span>(<span class="string">"Content-Type"</span>, <span class="string">"application/x-www-form-urlencoded"</span>)
-                <span class="keyword">return</span> <span class="keyword">nil</span>
+        ambatukam.<span class="fn">WithHooks</span>(ambatukam.Hooks{
+            BeforeRequest: <span class="kw">func</span>(req *http.Request) error {
+                req.Header.<span class="fn">Set</span>(<span class="str">"Authorization"</span>, <span class="str">"Bearer "</span>+stripeKey)
+                <span class="kw">return</span> <span class="kw">nil</span>
             },
         }),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    body := strings.<span class="function">NewReader</span>(<span class="string">"amount=2000&currency=usd&source=tok_visa"</span>)
-    resp, err := client.<span class="function">Post</span>(context.<span class="function">Background</span>(), <span class="string">"https://api.stripe.com/v1/charges"</span>, <span class="string">"application/x-www-form-urlencoded"</span>, body)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Printf</span>(<span class="string">"Payment failed: %v"</span>, err)
-        <span class="keyword">return</span>
+    body := strings.<span class="fn">NewReader</span>(<span class="str">"amount=2000&currency=usd"</span>)
+    resp, err := client.<span class="fn">Post</span>(ctx, <span class="str">"https://api.stripe.com/v1/charges"</span>, <span class="str">"application/x-www-form-urlencoded"</span>, body)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        log.<span class="fn">Printf</span>(<span class="str">"Payment failed: %v"</span>, err)
+        <span class="kw">return</span>
     }
-    <span class="keyword">defer</span> resp.Body.<span class="function">Close</span>()
+    <span class="kw">defer</span> resp.Body.<span class="fn">Close</span>()
+}</code></pre></div></div>
+                <div id="micro" class="panel"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-    log.<span class="function">Printf</span>(<span class="string">"Payment status: %d"</span>, resp.StatusCode)
-}</code></pre>
-                    </div>
-                </div>
-                <div id="microservice" class="example-panel">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
-
-<span class="keyword">import</span> (
-    <span class="string">"context"</span>
-    <span class="string">"fmt"</span>
-    <span class="string">"log"</span>
-    <span class="string">"time"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"fmt"</span>
+    <span class="str">"time"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">type</span> User <span class="keyword">struct</span> {
-    ID    <span class="type">int</span>    <span class="string">`json:"id"`</span>
-    Name  <span class="type">string</span> <span class="string">`json:"name"`</span>
-    Email <span class="type">string</span> <span class="string">`json:"email"`</span>
+<span class="kw">type</span> User <span class="kw">struct</span> {
+    ID    <span class="type">int</span>    <span class="str">`json:"id"`</span>
+    Name  <span class="type">string</span> <span class="str">`json:"name"`</span>
+    Email <span class="type">string</span> <span class="str">`json:"email"`</span>
 }
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithRequestID</span>(<span class="string">"X-Request-ID"</span>),
-        ambatukam.<span class="function">WithSingleflight</span>(),
-        ambatukam.<span class="function">WithTimeoutMap</span>(<span class="keyword">map</span>[<span class="type">string</span>]time.Duration{
-            <span class="string">"/api/users/*"</span>:  <span class="number">5</span> * time.Second,
-            <span class="string">"/api/orders/*"</span>: <span class="number">10</span> * time.Second,
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithRequestID</span>(<span class="str">"X-Request-ID"</span>),
+        ambatukam.<span class="fn">WithSingleflight</span>(),
+        ambatukam.<span class="fn">WithTimeoutMap</span>(<span class="kw">map</span>[<span class="type">string</span>]time.Duration{
+            <span class="str">"/api/users/*"</span>:  <span class="num">5</span> * time.Second,
+            <span class="str">"/api/orders/*"</span>: <span class="num">10</span> * time.Second,
         }),
-        ambatukam.<span class="function">WithRetry</span>(ambatukam.<span class="function">DefaultRetryConfig</span>()),
-        ambatukam.<span class="function">WithHooks</span>(ambatukam.Hooks{
-            BeforeRequest: <span class="keyword">func</span>(req *http.Request) error {
-                req.Header.<span class="function">Set</span>(<span class="string">"Authorization"</span>, <span class="string">"Bearer "</span>+<span class="function">getServiceToken</span>())
-                <span class="keyword">return</span> <span class="keyword">nil</span>
+        ambatukam.<span class="fn">WithRetry</span>(ambatukam.<span class="fn">DefaultRetryConfig</span>()),
+        ambatukam.<span class="fn">WithHooks</span>(ambatukam.Hooks{
+            BeforeRequest: <span class="kw">func</span>(req *http.Request) error {
+                req.Header.<span class="fn">Set</span>(<span class="str">"Authorization"</span>, <span class="str">"Bearer "</span>+<span class="fn">getToken</span>())
+                <span class="kw">return</span> <span class="kw">nil</span>
             },
         }),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    user, err := ambatukam.<span class="function">GetJSON</span>[User](client, context.<span class="function">Background</span>(), <span class="string">"http://user-service:8080/api/users/123"</span>)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Fatal</span>(err)
-    }
-    fmt.<span class="function">Printf</span>(<span class="string">"User: %s (%s)\n"</span>, user.Name, user.Email)
-}
+    user, err := ambatukam.<span class="fn">GetJSON</span>[User](client, ctx, <span class="str">"http://user-service/api/users/123"</span>)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Printf</span>(<span class="str">"User: %s (%s)\n"</span>, user.Name, user.Email)
+}</code></pre></div></div>
+                <div id="ratelimit" class="panel"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-<span class="keyword">func</span> <span class="function">getServiceToken</span>() <span class="type">string</span> {
-    <span class="keyword">return</span> <span class="string">"service-token-xxx"</span>
-}</code></pre>
-                    </div>
-                </div>
-                <div id="ratelimit" class="example-panel">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
-
-<span class="keyword">import</span> (
-    <span class="string">"context"</span>
-    <span class="string">"fmt"</span>
-    <span class="string">"log"</span>
-    <span class="string">"time"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"fmt"</span>
+    <span class="str">"time"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">type</span> Weather <span class="keyword">struct</span> {
-    Temperature <span class="type">float64</span> <span class="string">`json:"temperature"`</span>
-    Humidity    <span class="type">int</span>     <span class="string">`json:"humidity"`</span>
-    Description <span class="type">string</span>  <span class="string">`json:"description"`</span>
+<span class="kw">type</span> Weather <span class="kw">struct</span> {
+    Temperature <span class="type">float64</span> <span class="str">`json:"temperature"`</span>
+    Description <span class="type">string</span>  <span class="str">`json:"description"`</span>
 }
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithRateLimit</span>(ambatukam.RateLimitConfig{
-            Rate:        <span class="number">5</span>,
-            Burst:       <span class="number">10</span>,
-            WaitTimeout: <span class="number">2</span> * time.Second,
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithRateLimit</span>(ambatukam.RateLimitConfig{
+            Rate: <span class="num">5</span>, Burst: <span class="num">10</span>, WaitTimeout: <span class="num">2</span> * time.Second,
         }),
-        ambatukam.<span class="function">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="number">30</span> * time.Second}),
-        ambatukam.<span class="function">WithFallback</span>(ambatukam.FallbackConfig{
-            Handler: <span class="keyword">func</span>(req *http.Request, err error) (*http.Response, error) {
-                <span class="keyword">return</span> <span class="function">getCachedWeather</span>(req.URL.<span class="function">String</span>())
+        ambatukam.<span class="fn">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="num">30</span> * time.Second}),
+        ambatukam.<span class="fn">WithFallback</span>(ambatukam.FallbackConfig{
+            Handler: <span class="kw">func</span>(req *http.Request, err error) (*http.Response, error) {
+                <span class="kw">return</span> <span class="fn">getCachedData</span>(req.URL.<span class="fn">String</span>())
             },
         }),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    weather, err := ambatukam.<span class="function">GetJSON</span>[Weather](client, context.<span class="function">Background</span>(), <span class="string">"https://api.weather.com/v1/current?city=jakarta"</span>)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Fatal</span>(err)
-    }
-    fmt.<span class="function">Printf</span>(<span class="string">"Jakarta: %.1f°C, %s\n"</span>, weather.Temperature, weather.Description)
-}</code></pre>
-                    </div>
-                </div>
-                <div id="prometheus" class="example-panel">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
+    weather, err := ambatukam.<span class="fn">GetJSON</span>[Weather](client, ctx, <span class="str">"https://api.weather.com/v1/current"</span>)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Printf</span>(<span class="str">"%.1f°C — %s\n"</span>, weather.Temperature, weather.Description)
+}</code></pre></div></div>
+                <div id="prom" class="panel"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-<span class="keyword">import</span> (
-    <span class="string">"net/http"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
-    <span class="string">"github.com/prometheus/client_golang/prometheus"</span>
-    <span class="string">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
+<span class="kw">import</span> (
+    <span class="str">"net/http"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
+    <span class="str">"github.com/prometheus/client_golang/prometheus"</span>
+    <span class="str">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
 )
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    requestsTotal := prometheus.<span class="function">NewCounterVec</span>(
-        prometheus.CounterOpts{
-            Name: <span class="string">"http_requests_total"</span>,
-            Help: <span class="string">"Total HTTP requests"</span>,
-        },
-        []<span class="type">string</span>{<span class="string">"method"</span>, <span class="string">"url"</span>, <span class="string">"status"</span>},
+<span class="kw">func</span> <span class="fn">main</span>() {
+    requestsTotal := prometheus.<span class="fn">NewCounterVec</span>(
+        prometheus.CounterOpts{Name: <span class="str">"http_requests_total"</span>},
+        []<span class="type">string</span>{<span class="str">"method"</span>, <span class="str">"url"</span>, <span class="str">"status"</span>},
     )
-
-    requestDuration := prometheus.<span class="function">NewHistogramVec</span>(
-        prometheus.HistogramOpts{
-            Name:    <span class="string">"http_request_duration_seconds"</span>,
-            Help:    <span class="string">"Request duration in seconds"</span>,
-            Buckets: prometheus.DefBuckets,
-        },
-        []<span class="type">string</span>{<span class="string">"method"</span>, <span class="string">"url"</span>},
+    circuitState := prometheus.<span class="fn">NewGaugeVec</span>(
+        prometheus.GaugeOpts{Name: <span class="str">"circuit_breaker_state"</span>},
+        []<span class="type">string</span>{<span class="str">"name"</span>},
     )
+    prometheus.<span class="fn">MustRegister</span>(requestsTotal, circuitState)
 
-    circuitState := prometheus.<span class="function">NewGaugeVec</span>(
-        prometheus.GaugeOpts{
-            Name: <span class="string">"circuit_breaker_state"</span>,
-            Help: <span class="string">"Circuit breaker state (0=closed, 1=open, 2=half-open)"</span>,
-        },
-        []<span class="type">string</span>{<span class="string">"name"</span>},
-    )
-
-    prometheus.<span class="function">MustRegister</span>(requestsTotal, requestDuration, circuitState)
-
-    recorder := ambatukam.<span class="function">NewPrometheusRecorder</span>(ambatukam.PrometheusConfig{
-        RequestsTotal:   requestsTotal,
-        RequestDuration: requestDuration,
-        CircuitState:    circuitState,
+    recorder := ambatukam.<span class="fn">NewPrometheusRecorder</span>(ambatukam.PrometheusConfig{
+        RequestsTotal: requestsTotal,
+        CircuitState:  circuitState,
     })
 
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="number">3</span>}),
-        ambatukam.<span class="function">WithCircuitBreaker</span>(ambatukam.CircuitConfig{FailureThreshold: <span class="number">5</span>}),
-        ambatukam.<span class="function">WithMetrics</span>(recorder),
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="num">3</span>}),
+        ambatukam.<span class="fn">WithCircuitBreaker</span>(ambatukam.CircuitConfig{FailureThreshold: <span class="num">5</span>}),
+        ambatukam.<span class="fn">WithMetrics</span>(recorder),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    hc := client.<span class="function">HealthChecker</span>()
-    http.<span class="function">Handle</span>(<span class="string">"/health"</span>, hc.<span class="function">Handler</span>())
-    http.<span class="function">Handle</span>(<span class="string">"/metrics"</span>, promhttp.<span class="function">Handler</span>())
+    http.<span class="fn">Handle</span>(<span class="str">"/health"</span>, client.<span class="fn">HealthChecker</span>().<span class="fn">Handler</span>())
+    http.<span class="fn">Handle</span>(<span class="str">"/metrics"</span>, promhttp.<span class="fn">Handler</span>())
+    log.<span class="fn">Fatal</span>(http.<span class="fn">ListenAndServe</span>(<span class="str">":8080"</span>, <span class="kw">nil</span>))
+}</code></pre></div></div>
+                <div id="json" class="panel"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-    log.<span class="function">Println</span>(<span class="string">"Server starting on :8080"</span>)
-    log.<span class="function">Fatal</span>(http.<span class="function">ListenAndServe</span>(<span class="string">":8080"</span>, <span class="keyword">nil</span>))
-}</code></pre>
-                    </div>
-                </div>
-                <div id="json" class="example-panel">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
-
-<span class="keyword">import</span> (
-    <span class="string">"context"</span>
-    <span class="string">"fmt"</span>
-    <span class="string">"log"</span>
-    <span class="string">"time"</span>
-
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"context"</span>
+    <span class="str">"fmt"</span>
+    <span class="str">"time"</span>
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">type</span> User <span class="keyword">struct</span> {
-    ID    <span class="type">int</span>    <span class="string">`json:"id"`</span>
-    Name  <span class="type">string</span> <span class="string">`json:"name"`</span>
-    Email <span class="type">string</span> <span class="string">`json:"email"`</span>
+<span class="kw">type</span> User <span class="kw">struct</span> {
+    ID    <span class="type">int</span>    <span class="str">`json:"id"`</span>
+    Name  <span class="type">string</span> <span class="str">`json:"name"`</span>
+    Email <span class="type">string</span> <span class="str">`json:"email"`</span>
 }
 
-<span class="keyword">type</span> CreateUserRequest <span class="keyword">struct</span> {
-    Name  <span class="type">string</span> <span class="string">`json:"name"`</span>
-    Email <span class="type">string</span> <span class="string">`json:"email"`</span>
-}
-
-<span class="keyword">func</span> <span class="function">main</span>() {
-    client := ambatukam.<span class="function">New</span>(
-        ambatukam.<span class="function">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="number">5</span> * time.Second}),
-        ambatukam.<span class="function">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="number">3</span>}),
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client := ambatukam.<span class="fn">New</span>(
+        ambatukam.<span class="fn">WithTimeout</span>(ambatukam.TimeoutConfig{Timeout: <span class="num">5</span> * time.Second}),
+        ambatukam.<span class="fn">WithRetry</span>(ambatukam.RetryConfig{MaxRetries: <span class="num">3</span>}),
     )
-    <span class="keyword">defer</span> client.<span class="function">Close</span>()
+    <span class="kw">defer</span> client.<span class="fn">Close</span>()
 
-    ctx := context.<span class="function">Background</span>()
+    user, err := ambatukam.<span class="fn">GetJSON</span>[User](client, ctx, <span class="str">"https://api.example.com/users/1"</span>)
+    <span class="kw">if</span> err != <span class="kw">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Printf</span>(<span class="str">"User: %s (%s)\n"</span>, user.Name, user.Email)
 
-    <span class="comment">// GET request — auto decode JSON</span>
-    user, err := ambatukam.<span class="function">GetJSON</span>[User](client, ctx, <span class="string">"https://api.example.com/users/1"</span>)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Fatal</span>(err)
-    }
-    fmt.<span class="function">Printf</span>(<span class="string">"User: %s (%s)\n"</span>, user.Name, user.Email)
+    created, err := ambatukam.<span class="fn">PostJSON</span>[User](client, ctx, <span class="str">"https://api.example.com/users"</span>,
+        User{Name: <span class="str">"John"</span>, Email: <span class="str">"john@example.com"</span>})
+    <span class="kw">if</span> err != <span class="kw">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Printf</span>(<span class="str">"Created: %s (ID: %d)\n"</span>, created.Name, created.ID)
+}</code></pre></div></div>
+                <div id="preset" class="panel"><div class="code-block"><pre><code><span class="kw">package</span> main
 
-    <span class="comment">// POST request — auto encode/decode JSON</span>
-    newUser := CreateUserRequest{Name: <span class="string">"John"</span>, Email: <span class="string">"john@example.com"</span>}
-    created, err := ambatukam.<span class="function">PostJSON</span>[User](client, ctx, <span class="string">"https://api.example.com/users"</span>, newUser)
-    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
-        log.<span class="function">Fatal</span>(err)
-    }
-    fmt.<span class="function">Printf</span>(<span class="string">"Created: %s (ID: %d)\n"</span>, created.Name, created.ID)
-}</code></pre>
-                    </div>
-                </div>
-                <div id="preset" class="example-panel">
-                    <div class="code-block">
-                        <pre><code><span class="keyword">package</span> main
-
-<span class="keyword">import</span> (
-    <span class="string">"github.com/farhanturu/ambatukam-go"</span>
+<span class="kw">import</span> (
+    <span class="str">"github.com/farhanturu/ambatukam-go"</span>
 )
 
-<span class="keyword">func</span> <span class="function">main</span>() {
-    <span class="comment">// Production — balanced defaults</span>
-    <span class="comment">// 3 retries, 30s timeout, 5 failure threshold, NumCPU×4 concurrent</span>
-    prodClient := ambatukam.<span class="function">New</span>(ambatukam.<span class="function">ProductionConfig</span>()...)
-    <span class="keyword">defer</span> prodClient.<span class="function">Close</span>()
+<span class="kw">func</span> <span class="fn">main</span>() {
+    <span class="cmt">// Production — balanced defaults</span>
+    prod := ambatukam.<span class="fn">New</span>(ambatukam.<span class="fn">ProductionConfig</span>()...)
+    <span class="kw">defer</span> prod.<span class="fn">Close</span>()
 
-    <span class="comment">// Aggressive — fast-fail for fragile services</span>
-    <span class="comment">// 1 retry, 5s timeout, 3 failure threshold, NumCPU×2 concurrent</span>
-    aggressiveClient := ambatukam.<span class="function">New</span>(ambatukam.<span class="function">AggressiveConfig</span>()...)
-    <span class="keyword">defer</span> aggressiveClient.<span class="function">Close</span>()
+    <span class="cmt">// Aggressive — fast-fail for fragile services</span>
+    aggressive := ambatukam.<span class="fn">New</span>(ambatukam.<span class="fn">AggressiveConfig</span>()...)
+    <span class="kw">defer</span> aggressive.<span class="fn">Close</span>()
 
-    <span class="comment">// Conservative — generous for critical services</span>
-    <span class="comment">// 5 retries, 60s timeout, 20 failure threshold, NumCPU×8 concurrent</span>
-    conservativeClient := ambatukam.<span class="function">New</span>(ambatukam.<span class="function">ConservativeConfig</span>()...)
-    <span class="keyword">defer</span> conservativeClient.<span class="function">Close</span>()
-}</code></pre>
-                    </div>
-                </div>
+    <span class="cmt">// Conservative — generous for critical services</span>
+    conservative := ambatukam.<span class="fn">New</span>(ambatukam.<span class="fn">ConservativeConfig</span>()...)
+    <span class="kw">defer</span> conservative.<span class="fn">Close</span>()
+}</code></pre></div></div>
             </div>
         </div>
     </section>
@@ -550,98 +497,33 @@
     <section id="comparison" class="comparison">
         <div class="container">
             <div class="section-header">
-                <h2>Why choose <span class="gradient-text">Ambatukam Go</span>?</h2>
+                <span class="eyebrow">Comparison</span>
+                <h2>Why choose <span class="text-gradient">Ambatukam Go</span>?</h2>
                 <p>One library replaces 3-5 different packages.</p>
             </div>
-            <div class="comparison-table-wrapper">
-                <table class="comparison-table">
+            <div class="table-wrap">
+                <table>
                     <thead>
                         <tr>
                             <th>Feature</th>
-                            <th>Ambatukam Go</th>
+                            <th class="highlight">Ambatukam Go</th>
                             <th>failsafe-go</th>
                             <th>go-retryablehttp</th>
                             <th>sony/gobreaker</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Retry</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Circuit Breaker</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="check">✅</td>
-                        </tr>
-                        <tr>
-                            <td>Bulkhead</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Rate Limiter</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Timeout Map</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Fallback</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Singleflight</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Health Check</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Prometheus</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Custom Logger</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                            <td class="cross">❌</td>
-                        </tr>
-                        <tr>
-                            <td>Zero Deps</td>
-                            <td class="check">✅</td>
-                            <td class="check">✅</td>
-                            <td class="cross">❌</td>
-                            <td class="check">✅</td>
-                        </tr>
+                        <tr><td>Retry</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td></tr>
+                        <tr><td>Circuit Breaker</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
+                        <tr><td>Bulkhead</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Rate Limiter</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Timeout Map</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Fallback</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Singleflight</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Health Check</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Prometheus</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Custom Logger</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Zero Deps</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -650,25 +532,24 @@
 
     <section class="cta">
         <div class="container">
-            <h2>Ready to supercharge your HTTP client?</h2>
-            <p>Start using Ambatukam Go today and never worry about resilience again.</p>
-            <div class="hero-buttons">
-                <a href="#quickstart" class="btn btn-primary">Get Started</a>
-                <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="btn btn-secondary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    View on GitHub
-                </a>
+            <div class="cta-card">
+                <div class="card-shell"><div class="card-core">
+                    <h2>Ready to supercharge<br>your HTTP client?</h2>
+                    <p>Start using Ambatukam Go today.</p>
+                    <div class="hero-actions">
+                        <a href="#quickstart" class="btn btn-primary"><span>Get Started</span><span class="btn-icon">→</span></a>
+                        <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="btn btn-ghost"><span>View on GitHub</span></a>
+                    </div>
+                </div></div>
             </div>
         </div>
     </section>
 
     <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="assets/logo-icon.svg" alt="Ambatukam Go" width="32" height="32">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="assets/logo-icon.svg" alt="Ambatukam Go" width="24" height="24">
                     <span>Ambatukam Go</span>
                 </div>
                 <div class="footer-links">
@@ -678,8 +559,7 @@
                     <a href="https://github.com/farhanturu/ambatukam-go/blob/main/docs/FAQ.md" target="_blank">FAQ</a>
                 </div>
                 <div class="footer-copy">
-                    <p>Built with ❤️ by <a href="https://github.com/farhanturu" target="_blank">farhanturu</a></p>
-                    <p>MIT License</p>
+                    Built by <a href="https://github.com/farhanturu" target="_blank">farhanturu</a> · MIT License
                 </div>
             </div>
         </div>
