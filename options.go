@@ -130,6 +130,16 @@ func WithMetrics(r MetricsRecorder) Option {
 		c.metrics = r
 	}
 }
+func WithTimeoutMap(rules map[string]time.Duration) Option {
+	return func(c *Client) {
+		c.policies = append(c.policies, NewTimeoutMap(rules))
+	}
+}
+func WithCustomLogger(l Logger) Option {
+	return func(c *Client) {
+		c.customLogger = l
+	}
+}
 
 func DefaultConfig() []Option {
 	return []Option{
