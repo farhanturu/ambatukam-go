@@ -32,10 +32,10 @@ func (r *recordingPolicy) Execute(ctx context.Context, req *http.Request, next a
 // shortCircuitPolicy returns an error from Execute without calling next.
 // Used to verify that later policies in a Chain are not invoked.
 type shortCircuitPolicy struct {
-	order *[]string
 	err   error
-	name  string
+	order *[]string
 	count *atomic.Int32
+	name  string
 }
 
 func (s *shortCircuitPolicy) Execute(ctx context.Context, req *http.Request, next ambatukam.PolicyFunc) (*http.Response, error) {

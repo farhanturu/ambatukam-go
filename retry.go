@@ -13,11 +13,11 @@ import (
 )
 
 type RetryPolicy struct {
-	cfg     RetryConfig
-	backoff Backoff
-	logger  *slog.Logger
 	hooks   Hooks
+	backoff Backoff
 	metrics MetricsRecorder
+	logger  *slog.Logger
+	cfg     RetryConfig
 }
 
 func DefaultRetryConfig() RetryConfig {

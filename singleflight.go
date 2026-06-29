@@ -16,10 +16,10 @@ type SingleflightPolicy struct {
 }
 
 type singleflightCall struct {
-	wg        sync.WaitGroup
+	err       error
 	val       *http.Response
 	bodyBytes []byte
-	err       error
+	wg        sync.WaitGroup
 }
 
 func NewSingleflight() *SingleflightPolicy {

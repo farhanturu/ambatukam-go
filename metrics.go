@@ -16,8 +16,8 @@ type Logger interface {
 
 type customLoggerHandler struct {
 	l     Logger
-	attrs []slog.Attr
 	group string
+	attrs []slog.Attr
 }
 
 func (h *customLoggerHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }

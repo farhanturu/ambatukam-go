@@ -10,11 +10,11 @@ import (
 )
 
 type HealthStatus struct {
-	Policies  map[string]string `json:"policies"`
-	Memory    MemoryStats       `json:"memory"`
 	Timestamp time.Time         `json:"timestamp"`
-	Uptime    time.Duration     `json:"uptime"`
+	Policies  map[string]string `json:"policies"`
 	Status    string            `json:"status"`
+	Memory    MemoryStats       `json:"memory"`
+	Uptime    time.Duration     `json:"uptime"`
 }
 
 type MemoryStats struct {

@@ -10,8 +10,8 @@ import (
 )
 
 type TimeoutPolicy struct {
-	timeout time.Duration
 	metrics MetricsRecorder
+	timeout time.Duration
 }
 
 func NewTimeout(cfg TimeoutConfig) *TimeoutPolicy {

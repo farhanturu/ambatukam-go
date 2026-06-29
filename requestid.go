@@ -10,8 +10,8 @@ import (
 const defaultRequestIDHeader = "X-Request-ID"
 
 type RequestIDPolicy struct {
-	header string
 	gen    func() string
+	header string
 }
 
 func NewRequestIDPolicy() *RequestIDPolicy {

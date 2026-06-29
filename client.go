@@ -10,12 +10,12 @@ import (
 )
 
 type Client struct {
-	hc       *http.Client
-	policies []Policy
-	logger   *slog.Logger
-	metrics  MetricsRecorder
 	hooks    Hooks
+	metrics  MetricsRecorder
+	hc       *http.Client
+	logger   *slog.Logger
 	hcRef    *HealthChecker
+	policies []Policy
 }
 
 func New(opts ...Option) *Client {

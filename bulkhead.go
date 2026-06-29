@@ -25,13 +25,13 @@ type bulkheadResult struct {
 }
 
 type BulkheadPolicy struct {
-	cfg      BulkheadConfig
-	logger   *slog.Logger
 	metrics  MetricsRecorder
+	logger   *slog.Logger
 	queue    chan *bulkheadRequest
 	quit     chan struct{}
-	inFlight atomic.Uint32
+	cfg      BulkheadConfig
 	denied   atomic.Uint64
+	inFlight atomic.Uint32
 	closed   atomic.Bool
 }
 
