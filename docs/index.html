@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ambatukam Go — Zero-Dependency HTTP Resilience</title>
-    <meta name="description" content="Composable, idiomatic Go HTTP resilience — Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check. Zero dependencies.">
+    <title>Ambatukam Go — Production-Grade HTTP Resilience</title>
+    <meta name="description" content="Composable, idiomatic Go HTTP resilience — Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check. Zero dependencies. Battle-tested with 1000-goroutine stress tests.">
     <link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +27,7 @@
                 <a href="#features">Features</a>
                 <a href="#quickstart">Quick Start</a>
                 <a href="#examples">Examples</a>
+                <a href="#testing">Testing</a>
                 <a href="#comparison">Compare</a>
             </div>
             <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="nav-github">
@@ -44,6 +45,7 @@
             <a href="#features" onclick="closeMenu()">Features</a>
             <a href="#quickstart" onclick="closeMenu()">Quick Start</a>
             <a href="#examples" onclick="closeMenu()">Examples</a>
+            <a href="#testing" onclick="closeMenu()">Testing</a>
             <a href="#comparison" onclick="closeMenu()">Compare</a>
             <a href="https://github.com/farhanturu/ambatukam-go" target="_blank">GitHub</a>
         </div>
@@ -54,14 +56,14 @@
             <div class="hero-content">
                 <div class="hero-badge">
                     <span class="badge-dot"></span>
-                    v1.2.0 — Zero Dependencies
+                    v1.2.2 — Production Hardened
                 </div>
                 <h1 class="hero-title">
                     <span class="title-line">Your Go HTTP</span>
                     <span class="title-line title-accent">client just got</span>
                     <span class="title-line title-gradient">superpowers</span>
                 </h1>
-                <p class="hero-desc">Composable, idiomatic Go HTTP resilience. Retry, Circuit Breaker, Bulkhead, Rate Limiter, Timeout, Fallback, Singleflight, Hooks, Metrics, Health Check — one API, zero deps.</p>
+                <p class="hero-desc">Composable, idiomatic Go HTTP resilience. Retry, Circuit Breaker, FIFO Bulkhead, Lock-Free Rate Limiter, Timeout, Fallback, Body-Aware Singleflight, Hooks, Metrics, Health Check — one API, zero deps.</p>
                 <div class="hero-actions">
                     <a href="#quickstart" class="btn btn-primary">
                         <span>Get Started</span>
@@ -114,9 +116,9 @@
                     <div class="stat-label">External Dependencies</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value" data-count="100">0</div>
+                    <div class="stat-value" data-count="1000">0</div>
                     <div class="stat-plus">+</div>
-                    <div class="stat-label">Tests with Race Detector</div>
+                    <div class="stat-label">Goroutine Stress Tests</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value stat-text">MIT</div>
@@ -131,84 +133,84 @@
             <div class="section-header">
                 <span class="eyebrow">Features</span>
                 <h2>Everything for <span class="text-gradient">production-grade</span> HTTP</h2>
-                <p>One library replaces 3-5 different packages. Zero dependencies, one consistent API.</p>
+                <p>One library replaces 3-5 different packages. Zero dependencies, one consistent API, battle-tested.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card card-large">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🔄</div>
                         <h3>Retry with Backoff</h3>
-                        <p>Exponential, constant, or linear backoff with automatic jitter. POST bodies are automatically buffered for safe retry. Supports Retry-After headers.</p>
+                        <p>Exponential, constant, or linear backoff with automatic jitter. POST bodies are automatically buffered for safe retry. Supports Retry-After headers. Custom ShouldRetry hook.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">⚡</div>
                         <h3>Circuit Breaker</h3>
-                        <p>Three-state machine — closed, open, half-open. Race-safe with sync.RWMutex for better read concurrency.</p>
+                        <p>Three-state machine — closed, open, half-open. Race-safe with sync.RWMutex and generation counter for stale probe protection.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🚧</div>
-                        <h3>Bulkhead</h3>
-                        <p>Limit concurrent requests to downstream services. Optional bounded queue with timeout.</p>
+                        <h3>FIFO Bulkhead</h3>
+                        <p>Worker pool with proper FIFO ordering. MaxQueue=0 for fail-fast mode. Graceful shutdown via client.Close().</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🚦</div>
-                        <h3>Rate Limiter</h3>
-                        <p>Token bucket implementation. Can wait for a token or fail fast. Perfect for API quotas.</p>
+                        <h3>Lock-Free Rate Limiter</h3>
+                        <p>Channel-based token bucket — no mutex contention under high concurrency. Perfect for API quotas.</p>
                     </div></div>
                 </div>
                 <div class="feature-card card-large">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">⏱️</div>
                         <h3>Timeout Map</h3>
-                        <p>Different timeouts for different URL patterns. Supports wildcards for flexible per-endpoint configuration. Set 10s for payments, 5s for users, 1s for health checks.</p>
+                        <p>Different timeouts for different URL patterns. Supports * (single segment) and ** (multi segment) wildcards. Set 10s for payments, 5s for users, 1s for health checks.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🛟</div>
                         <h3>Fallback</h3>
-                        <p>Return a cached response or friendly error when everything fails.</p>
+                        <p>Return a cached response or friendly error when everything fails. Propagates attempt count from upstream retry errors.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🔗</div>
-                        <h3>Singleflight</h3>
-                        <p>Deduplicate concurrent requests. 10 goroutines = 1 HTTP call.</p>
+                        <h3>Body-Aware Singleflight</h3>
+                        <p>Deduplicate concurrent requests. GET uses method+URL key. POST/PUT/PATCH includes sha256(body) — never merges different payloads.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">📊</div>
                         <h3>Prometheus</h3>
-                        <p>Full Prometheus integration with Counter, Gauge, Histogram vectors.</p>
+                        <p>Full Prometheus integration with Counter, Gauge, Histogram vectors. All 9 metrics wired to policies.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🏥</div>
                         <h3>Health Check</h3>
-                        <p>Built-in /health endpoint with policy status, memory stats, uptime.</p>
+                        <p>Built-in /health endpoint with policy status, memory stats, uptime. Background refresh, goroutine cleanup on Close().</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">📝</div>
                         <h3>Custom Logger</h3>
-                        <p>Implement Logger interface for zerolog, zap, or any logging library.</p>
+                        <p>WithCustomLogger(Logger) — implement 4 methods (Debug, Info, Warn, Error) for zerolog, zap, or any logging library.</p>
                     </div></div>
                 </div>
                 <div class="feature-card">
                     <div class="card-shell"><div class="card-core">
                         <div class="feature-icon">🪝</div>
-                        <h3>5 Hooks</h3>
-                        <p>BeforeRequest, AfterResponse, OnRetry, OnStateChange, OnFallback.</p>
+                        <h3>Independent Hooks</h3>
+                        <p>BeforeRequest and AfterResponse fire on every request — even without WithRetry. OnRetry, OnStateChange, OnFallback are policy-specific.</p>
                     </div></div>
                 </div>
             </div>
@@ -268,8 +270,8 @@
                         <div class="checklist">
                             <div class="check-item"><span class="check-icon">✓</span> Auto-retry with exponential backoff</div>
                             <div class="check-item"><span class="check-icon">✓</span> Circuit opens when service is down</div>
-                            <div class="check-item"><span class="check-icon">✓</span> Concurrency limited to 10</div>
-                            <div class="check-item"><span class="check-icon">✓</span> Rate limited to 10 req/s</div>
+                            <div class="check-item"><span class="check-icon">✓</span> FIFO queue with concurrency limit</div>
+                            <div class="check-item"><span class="check-icon">✓</span> Lock-free rate limiting</div>
                             <div class="check-item"><span class="check-icon">✓</span> Timeout per attempt</div>
                         </div>
                     </div>
@@ -494,6 +496,60 @@
         </div>
     </section>
 
+    <section id="testing" class="features" style="border-top: 1px solid var(--border);">
+        <div class="container">
+            <div class="section-header">
+                <span class="eyebrow">Battle-Tested</span>
+                <h2>Stress tested with <span class="text-gradient">1000 goroutines</span></h2>
+                <p>20 stress tests covering DDoS-level concurrency, chaos servers, circuit breaker state transitions, and full-stack integration.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">💥</div>
+                        <h3>DDoS Bulkhead</h3>
+                        <p>500 goroutines, 10 concurrent. Verifies FIFO ordering and fail-fast denial under extreme load.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🌊</div>
+                        <h3>DDoS Full Stack</h3>
+                        <p>1000 goroutines with chaos server (50% fail, random delay). All policies working together.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🔀</div>
+                        <h3>Circuit Breaker Cycles</h3>
+                        <p>5 cycles of open/close transitions with 20 concurrent goroutines each. Race-safe state machine.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Singleflight Dedup</h3>
+                        <p>20 goroutines, same URL. Verifies only 1 backend hit, 20 successful responses.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🪝</div>
+                        <h3>Hooks Verification</h3>
+                        <p>50 goroutines. Verifies BeforeRequest and AfterResponse fire exactly 50 times each.</p>
+                    </div></div>
+                </div>
+                <div class="feature-card">
+                    <div class="card-shell"><div class="card-core">
+                        <div class="feature-icon">🏥</div>
+                        <h3>Chaos Server</h3>
+                        <p>Flaky, slow, down, rate-limited, recovery servers. Tests every failure mode in production.</p>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="comparison" class="comparison">
         <div class="container">
             <div class="section-header">
@@ -515,14 +571,16 @@
                     <tbody>
                         <tr><td>Retry</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td></tr>
                         <tr><td>Circuit Breaker</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
-                        <tr><td>Bulkhead</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
-                        <tr><td>Rate Limiter</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
-                        <tr><td>Timeout Map</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>FIFO Bulkhead</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Lock-Free Rate Limiter</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Timeout Map (wildcards)</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
                         <tr><td>Fallback</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
-                        <tr><td>Singleflight</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Body-Aware Singleflight</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
                         <tr><td>Health Check</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
                         <tr><td>Prometheus</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
                         <tr><td>Custom Logger</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Independent Hooks</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+                        <tr><td>Stress Tested (1000 goroutines)</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
                         <tr><td>Zero Deps</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
                     </tbody>
                 </table>
@@ -535,7 +593,7 @@
             <div class="cta-card">
                 <div class="card-shell"><div class="card-core">
                     <h2>Ready to supercharge<br>your HTTP client?</h2>
-                    <p>Start using Ambatukam Go today.</p>
+                    <p>Start using Ambatukam Go today. Production-grade, battle-tested, zero dependencies.</p>
                     <div class="hero-actions">
                         <a href="#quickstart" class="btn btn-primary"><span>Get Started</span><span class="btn-icon">→</span></a>
                         <a href="https://github.com/farhanturu/ambatukam-go" target="_blank" class="btn btn-ghost"><span>View on GitHub</span></a>
@@ -555,11 +613,12 @@
                 <div class="footer-links">
                     <a href="https://github.com/farhanturu/ambatukam-go" target="_blank">GitHub</a>
                     <a href="https://pkg.go.dev/github.com/farhanturu/ambatukam-go" target="_blank">Go Reference</a>
+                    <a href="https://github.com/farhanturu/ambatukam-go/releases/tag/v1.2.2" target="_blank">Release v1.2.2</a>
                     <a href="https://github.com/farhanturu/ambatukam-go/blob/main/docs/COOKBOOK.md" target="_blank">Cookbook</a>
                     <a href="https://github.com/farhanturu/ambatukam-go/blob/main/docs/FAQ.md" target="_blank">FAQ</a>
                 </div>
                 <div class="footer-copy">
-                    Built by <a href="https://github.com/farhanturu" target="_blank">farhanturu</a> · MIT License
+                    Built by <a href="https://github.com/farhanturu" target="_blank">farhanturu</a> · MIT License · v1.2.2
                 </div>
             </div>
         </div>
