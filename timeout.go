@@ -95,9 +95,24 @@ func matchPattern(pattern, path string) bool {
 	if pattern == path {
 		return true
 	}
-	if strings.HasSuffix(pattern, "*") {
+	if strings.HasSuffix(pattern, "/*") && !strings.HasSuffix(pattern, "**") {
 		prefix := strings.TrimSuffix(pattern, "*")
 		return strings.HasPrefix(path, prefix)
 	}
-	return false
+	if strings.HasSuffix(pattern, "**") {
+		prefix := strings.TrimSuffix(pattern, "**")
+		return strings.HasPrefix(path, prefix)
+	}
+	patParts := strings.Split(strings.TrimPrefix(pattern, "/"), "/")
+	pathParts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	if len(patParts) != len(pathParts) {
+		return false
+	}
+	for i, pp := range patParts {
+		if pp == "*" || pp == pathParts[i] {
+			continue
+		}
+		return false
+	}
+	return true
 }

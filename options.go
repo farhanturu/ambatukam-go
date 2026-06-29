@@ -92,6 +92,9 @@ func WithHTTPClient(hc *http.Client) Option {
 func WithLogger(l *slog.Logger) Option {
 	return func(c *Client) { c.logger = l }
 }
+func WithCustomLogger(l Logger) Option {
+	return func(c *Client) { c.logger = slog.New(&customLoggerHandler{l: l}) }
+}
 func WithDebug() Option {
 	return func(c *Client) {
 		c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))

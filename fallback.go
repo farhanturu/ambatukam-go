@@ -2,6 +2,7 @@ package ambatukam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -33,21 +34,24 @@ func (f *FallbackPolicy) Execute(ctx context.Context, req *http.Request, next Po
 	if err == nil {
 		return resp, nil
 	}
-
 	if f.hooks.OnFallback != nil {
 		f.hooks.OnFallback(req, err)
 	}
 	if f.metrics != nil {
 		f.metrics.RecordFallback(req.Method, req.URL.String())
 	}
-
 	fallbackResp, fallbackErr := f.handler(req, err)
 	if fallbackErr != nil {
+		attempts := 1
+		var reqErr *RequestError
+		if errors.As(err, &reqErr) && reqErr.Attempts > 0 {
+			attempts = reqErr.Attempts
+		}
 		return nil, &RequestError{
 			Method:   req.Method,
 			URL:      req.URL.String(),
 			Policy:   "fallback",
-			Attempts: 1,
+			Attempts: attempts,
 			Err:      fmt.Errorf("%w: %w", ErrFallback, fallbackErr),
 		}
 	}

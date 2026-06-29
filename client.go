@@ -15,6 +15,7 @@ type Client struct {
 	logger   *slog.Logger
 	hooks    Hooks
 	metrics  MetricsRecorder
+	hcRef    *HealthChecker
 }
 
 func New(opts ...Option) *Client {
@@ -45,6 +46,9 @@ func New(opts ...Option) *Client {
 			pp.WithMetrics(c.metrics)
 		}
 	}
+	if c.hooks.BeforeRequest != nil || c.hooks.AfterResponse != nil {
+		c.policies = append(c.policies, &hooksPolicy{hooks: c.hooks})
+	}
 	return c
 }
 
@@ -52,9 +56,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	if req == nil {
 		return nil, fmt.Errorf("ambatukam.Do: %w", ErrNilRequest)
 	}
-
 	start := time.Now()
-
 	funcs := make([]PolicyFunc, len(c.policies)+1)
 	funcs[len(funcs)-1] = func(ctx context.Context, r *http.Request) (*http.Response, error) {
 		return c.hc.Do(r)
@@ -66,16 +68,13 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 			return p.Execute(ctx, r, next)
 		}
 	}
-
 	resp, err := funcs[0](req.Context(), req)
-
 	duration := time.Since(start)
 	status := 0
 	if resp != nil {
 		status = resp.StatusCode
 	}
 	c.metrics.RecordRequest(req.Method, req.URL.String(), status, duration)
-
 	return resp, err
 }
 
@@ -105,6 +104,14 @@ func (c *Client) DoWithContext(ctx context.Context, req *http.Request) (*http.Re
 
 func (c *Client) Close() error {
 	c.hc.CloseIdleConnections()
+	for _, p := range c.policies {
+		if b, ok := p.(*BulkheadPolicy); ok {
+			b.Close()
+		}
+	}
+	if c.hcRef != nil {
+		c.hcRef.Close()
+	}
 	return nil
 }
 
@@ -123,5 +130,26 @@ func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) HealthChecker() *HealthChecker {
-	return NewHealthChecker(c)
+	if c.hcRef != nil {
+		return c.hcRef
+	}
+	c.hcRef = NewHealthChecker(c)
+	return c.hcRef
+}
+
+type hooksPolicy struct {
+	hooks Hooks
+}
+
+func (hp *hooksPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
+	if hp.hooks.BeforeRequest != nil {
+		if err := hp.hooks.BeforeRequest(req); err != nil {
+			return nil, err
+		}
+	}
+	resp, err := next(ctx, req)
+	if hp.hooks.AfterResponse != nil {
+		hp.hooks.AfterResponse(req, resp, err)
+	}
+	return resp, err
 }

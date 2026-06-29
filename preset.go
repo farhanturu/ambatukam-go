@@ -28,6 +28,12 @@ func AggressiveConfig() []Option {
 			MaxConcurrent: uint32(runtime.NumCPU() * 2),
 			MaxQueue:      0,
 		}),
+		WithRateLimit(RateLimitConfig{
+			Rate:        50,
+			Burst:       20,
+			WaitTimeout: 200 * time.Millisecond,
+		}),
+		WithSingleflight(),
 	}
 }
 
@@ -51,5 +57,11 @@ func ConservativeConfig() []Option {
 			MaxQueue:      200,
 			QueueTimeout:  500 * time.Millisecond,
 		}),
+		WithRateLimit(RateLimitConfig{
+			Rate:        200,
+			Burst:       100,
+			WaitTimeout: 500 * time.Millisecond,
+		}),
+		WithSingleflight(),
 	}
 }

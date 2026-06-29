@@ -104,18 +104,8 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
 
-		if r.hooks.BeforeRequest != nil {
-			if hookErr := r.hooks.BeforeRequest(req); hookErr != nil {
-				return nil, hookErr
-			}
-		}
-
 		resp, err := next(ctx, req)
 		lastResp, lastErr = resp, err
-
-		if r.hooks.AfterResponse != nil {
-			r.hooks.AfterResponse(req, resp, err)
-		}
 
 		should := r.shouldRetry(req, resp, err)
 		if !should {

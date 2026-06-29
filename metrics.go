@@ -1,6 +1,8 @@
 package ambatukam
 
 import (
+	"context"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -10,6 +12,54 @@ type Logger interface {
 	Info(msg string, args ...any)
 	Warn(msg string, args ...any)
 	Error(msg string, args ...any)
+}
+
+type customLoggerHandler struct {
+	l     Logger
+	attrs []slog.Attr
+	group string
+}
+
+func (h *customLoggerHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+
+func (h *customLoggerHandler) Handle(_ context.Context, r slog.Record) error {
+	args := make([]any, 0, len(h.attrs)*2+r.NumAttrs()*2)
+	for _, a := range h.attrs {
+		args = append(args, a.Key, a.Value.Any())
+	}
+	r.Attrs(func(a slog.Attr) bool {
+		args = append(args, a.Key, a.Value.Any())
+		return true
+	})
+	switch {
+	case r.Level >= slog.LevelError:
+		h.l.Error(r.Message, args...)
+	case r.Level >= slog.LevelWarn:
+		h.l.Warn(r.Message, args...)
+	case r.Level >= slog.LevelInfo:
+		h.l.Info(r.Message, args...)
+	default:
+		h.l.Debug(r.Message, args...)
+	}
+	return nil
+}
+
+func (h *customLoggerHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	clone := *h
+	clone.attrs = make([]slog.Attr, len(h.attrs)+len(attrs))
+	copy(clone.attrs, h.attrs)
+	copy(clone.attrs[len(h.attrs):], attrs)
+	return &clone
+}
+
+func (h *customLoggerHandler) WithGroup(name string) slog.Handler {
+	clone := *h
+	if h.group != "" {
+		clone.group = h.group + "." + name
+	} else {
+		clone.group = name
+	}
+	return &clone
 }
 
 type MetricsRecorder interface {
@@ -24,24 +74,15 @@ type MetricsRecorder interface {
 
 type noopMetricsRecorder struct{}
 
-func (n *noopMetricsRecorder) RecordRequest(method, url string, status int, duration time.Duration) {
-}
-func (n *noopMetricsRecorder) RecordRetry(method, url string, attempt int) {
-}
-func (n *noopMetricsRecorder) RecordCircuitStateChange(name string, from, to State) {
-}
-func (n *noopMetricsRecorder) RecordBulkheadDenied(method, url string) {
-}
-func (n *noopMetricsRecorder) RecordRateLimitDenied(method, url string) {
-}
-func (n *noopMetricsRecorder) RecordFallback(method, url string) {
-}
-func (n *noopMetricsRecorder) RecordTimeout(method, url string) {
-}
+func (n *noopMetricsRecorder) RecordRequest(string, string, int, time.Duration) {}
+func (n *noopMetricsRecorder) RecordRetry(string, string, int)                  {}
+func (n *noopMetricsRecorder) RecordCircuitStateChange(string, State, State)    {}
+func (n *noopMetricsRecorder) RecordBulkheadDenied(string, string)              {}
+func (n *noopMetricsRecorder) RecordRateLimitDenied(string, string)             {}
+func (n *noopMetricsRecorder) RecordFallback(string, string)                    {}
+func (n *noopMetricsRecorder) RecordTimeout(string, string)                     {}
 
-func NewNoopMetricsRecorder() MetricsRecorder {
-	return &noopMetricsRecorder{}
-}
+func NewNoopMetricsRecorder() MetricsRecorder { return &noopMetricsRecorder{} }
 
 type CounterVec interface {
 	WithLabelValues(lvs ...string) Counter

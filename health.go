@@ -76,7 +76,6 @@ func (h *HealthChecker) Handler() http.HandlerFunc {
 
 func (h *HealthChecker) getStatus() HealthStatus {
 	m := h.memStats.Load()
-
 	policies := make(map[string]string)
 	for _, p := range h.client.policies {
 		switch pp := p.(type) {
@@ -87,7 +86,6 @@ func (h *HealthChecker) getStatus() HealthStatus {
 			policies["bulkhead_denied"] = strconv.FormatUint(uint64(pp.Denied()), 10)
 		}
 	}
-
 	status := "healthy"
 	for _, v := range policies {
 		if v == "open" {
@@ -95,7 +93,6 @@ func (h *HealthChecker) getStatus() HealthStatus {
 			break
 		}
 	}
-
 	var memStats MemoryStats
 	if m != nil {
 		memStats = MemoryStats{
@@ -105,7 +102,6 @@ func (h *HealthChecker) getStatus() HealthStatus {
 			NumGC:      m.NumGC,
 		}
 	}
-
 	return HealthStatus{
 		Status:    status,
 		Timestamp: time.Now(),
