@@ -14,9 +14,9 @@ import (
 
 // recordingPolicy records enter/exit events in a shared order slice.
 type recordingPolicy struct {
-	name  string
 	order *[]string
 	count *atomic.Int32
+	name  string
 }
 
 func (r *recordingPolicy) Execute(ctx context.Context, req *http.Request, next ambatukam.PolicyFunc) (*http.Response, error) {
@@ -32,9 +32,9 @@ func (r *recordingPolicy) Execute(ctx context.Context, req *http.Request, next a
 // shortCircuitPolicy returns an error from Execute without calling next.
 // Used to verify that later policies in a Chain are not invoked.
 type shortCircuitPolicy struct {
-	name  string
 	order *[]string
 	err   error
+	name  string
 	count *atomic.Int32
 }
 
@@ -125,11 +125,11 @@ func TestTimeout_NoTimeoutWhenZero(t *testing.T) {
 
 	// Two variants: explicit zero and zero-value struct.
 	cases := []struct {
-		name string
 		opt  ambatukam.Option
+		name string
 	}{
-		{"explicit-zero", ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 0})},
-		{"zero-value", ambatukam.WithTimeout(ambatukam.TimeoutConfig{})},
+		{ambatukam.WithTimeout(ambatukam.TimeoutConfig{Timeout: 0}), "explicit-zero"},
+		{ambatukam.WithTimeout(ambatukam.TimeoutConfig{}), "zero-value"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

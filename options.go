@@ -17,20 +17,20 @@ type Hooks struct {
 }
 
 type RetryConfig struct {
-	MaxRetries     int
+	Backoff        Backoff
+	ShouldRetry    func(resp *http.Response, err error) bool
 	InitialBackoff time.Duration
 	MaxBackoff     time.Duration
 	Multiplier     float64
 	Jitter         float64
-	Backoff        Backoff
-	ShouldRetry    func(resp *http.Response, err error) bool
+	MaxRetries     int
 }
 
 type CircuitConfig struct {
-	FailureThreshold uint32
-	OpenDuration     time.Duration
-	HalfOpenMaxReqs  uint32
 	ShouldTrip       func(resp *http.Response, err error) bool
+	OpenDuration     time.Duration
+	FailureThreshold uint32
+	HalfOpenMaxReqs  uint32
 }
 
 type TimeoutConfig struct {
@@ -45,8 +45,8 @@ type BulkheadConfig struct {
 
 type RateLimitConfig struct {
 	Rate        float64
-	Burst       uint32
 	WaitTimeout time.Duration
+	Burst       uint32
 }
 
 type FallbackConfig struct {

@@ -15,7 +15,6 @@ import (
 )
 
 type hookRecorder struct {
-	mu             sync.Mutex
 	beforeReqs     []*http.Request
 	afterResponses []struct {
 		req  *http.Request
@@ -32,6 +31,7 @@ type hookRecorder struct {
 		from ambatukam.State
 		to   ambatukam.State
 	}
+	mu sync.Mutex
 }
 
 func newHookRecorder() *hookRecorder { return &hookRecorder{} }

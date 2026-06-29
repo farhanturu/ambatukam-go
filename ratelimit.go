@@ -9,13 +9,11 @@ import (
 )
 
 type RateLimitPolicy struct {
-	cfg     RateLimitConfig
-	logger  *slog.Logger
-	metrics MetricsRecorder
-
-	tokens chan struct{}
-	stop   chan struct{}
-
+	cfg       RateLimitConfig
+	logger    *slog.Logger
+	metrics   MetricsRecorder
+	tokens    chan struct{}
+	stop      chan struct{}
 	disabled  bool
 	closedAll bool
 }

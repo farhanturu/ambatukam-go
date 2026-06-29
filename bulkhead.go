@@ -25,15 +25,14 @@ type bulkheadResult struct {
 }
 
 type BulkheadPolicy struct {
-	cfg     BulkheadConfig
-	logger  *slog.Logger
-	metrics MetricsRecorder
-
+	cfg      BulkheadConfig
+	logger   *slog.Logger
+	metrics  MetricsRecorder
 	queue    chan *bulkheadRequest
 	quit     chan struct{}
-	closed   atomic.Bool
 	inFlight atomic.Uint32
 	denied   atomic.Uint64
+	closed   atomic.Bool
 }
 
 func NewBulkhead(cfg BulkheadConfig) *BulkheadPolicy {

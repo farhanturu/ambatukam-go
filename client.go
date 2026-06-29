@@ -13,8 +13,8 @@ type Client struct {
 	hc       *http.Client
 	policies []Policy
 	logger   *slog.Logger
-	hooks    Hooks
 	metrics  MetricsRecorder
+	hooks    Hooks
 	hcRef    *HealthChecker
 }
 

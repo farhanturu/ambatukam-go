@@ -18,20 +18,18 @@ const (
 )
 
 type CircuitBreakerPolicy struct {
-	cfg     CircuitConfig
-	logger  *slog.Logger
-	hooks   Hooks
-	metrics MetricsRecorder
-	name    string
-
+	cfg              CircuitConfig
+	logger           *slog.Logger
+	hooks            Hooks
+	metrics          MetricsRecorder
+	name             string
+	openedAt         time.Time
 	mu               sync.RWMutex
 	state            State
-	openedAt         time.Time
 	halfOpenPermits  uint32
 	halfOpenInFlight uint32
-
-	failures   atomic.Uint32
-	generation atomic.Uint64
+	failures         atomic.Uint32
+	generation       atomic.Uint64
 }
 
 func DefaultCircuitConfig() CircuitConfig {

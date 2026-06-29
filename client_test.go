@@ -16,9 +16,9 @@ import (
 
 // dummyPolicy: records call order
 type dummyPolicy struct {
-	name   string
 	order  *[]string
-	before func(*http.Request) // optional hook
+	before func(*http.Request)
+	name   string
 }
 
 func (d *dummyPolicy) Execute(ctx context.Context, req *http.Request, next ambatukam.PolicyFunc) (*http.Response, error) {

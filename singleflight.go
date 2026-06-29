@@ -11,8 +11,8 @@ import (
 )
 
 type SingleflightPolicy struct {
-	mu    sync.Mutex
 	calls map[string]*singleflightCall
+	mu    sync.Mutex
 }
 
 type singleflightCall struct {

@@ -40,9 +40,7 @@ func (m *mockMetricsRecorder) RecordTimeout(method, url string) {
 
 func TestMetricsRecorder_Interface(t *testing.T) {
 	var recorder MetricsRecorder = &mockMetricsRecorder{}
-	if recorder == nil {
-		t.Fatal("expected non-nil recorder")
-	}
+	recorder.RecordRequest("GET", "http://example.com", 200, time.Millisecond)
 }
 
 func TestNoopMetricsRecorder(t *testing.T) {

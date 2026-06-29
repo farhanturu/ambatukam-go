@@ -10,11 +10,11 @@ import (
 )
 
 type HealthStatus struct {
-	Status    string            `json:"status"`
-	Timestamp time.Time         `json:"timestamp"`
-	Uptime    time.Duration     `json:"uptime"`
 	Policies  map[string]string `json:"policies"`
 	Memory    MemoryStats       `json:"memory"`
+	Timestamp time.Time         `json:"timestamp"`
+	Uptime    time.Duration     `json:"uptime"`
+	Status    string            `json:"status"`
 }
 
 type MemoryStats struct {
@@ -28,8 +28,8 @@ type HealthChecker struct {
 	client     *Client
 	started    time.Time
 	memStats   atomic.Pointer[runtime.MemStats]
-	memUpdated atomic.Int64
 	stopCh     chan struct{}
+	memUpdated atomic.Int64
 }
 
 func NewHealthChecker(c *Client) *HealthChecker {
@@ -70,7 +70,7 @@ func (h *HealthChecker) Handler() http.HandlerFunc {
 		if status.Status != "healthy" {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
-		json.NewEncoder(w).Encode(status)
+		_ = json.NewEncoder(w).Encode(status)
 	}
 }
 

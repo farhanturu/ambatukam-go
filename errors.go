@@ -36,10 +36,10 @@ func Permanent(err error) error {
 type RequestError struct {
 	Method   string
 	URL      string
+	Err      error
+	Policy   string
 	Status   int
 	Attempts int
-	Policy   string
-	Err      error
 }
 
 func (e *RequestError) Error() string {
