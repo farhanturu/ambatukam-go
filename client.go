@@ -16,8 +16,8 @@ type Client struct {
 	hc       *http.Client
 	logger   *slog.Logger
 	hcRef    *HealthChecker
-	hcOnce   sync.Once
 	policies []Policy
+	hcOnce   sync.Once
 }
 
 func New(opts ...Option) *Client {
