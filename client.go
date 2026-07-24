@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type Client struct {
 	hc       *http.Client
 	logger   *slog.Logger
 	hcRef    *HealthChecker
+	hcOnce   sync.Once
 	policies []Policy
 }
 
@@ -105,8 +107,11 @@ func (c *Client) DoWithContext(ctx context.Context, req *http.Request) (*http.Re
 func (c *Client) Close() error {
 	c.hc.CloseIdleConnections()
 	for _, p := range c.policies {
-		if b, ok := p.(*BulkheadPolicy); ok {
-			b.Close()
+		switch pp := p.(type) {
+		case *BulkheadPolicy:
+			pp.Close()
+		case *RateLimitPolicy:
+			pp.Close()
 		}
 	}
 	if c.hcRef != nil {
@@ -130,10 +135,9 @@ func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) HealthChecker() *HealthChecker {
-	if c.hcRef != nil {
-		return c.hcRef
-	}
-	c.hcRef = NewHealthChecker(c)
+	c.hcOnce.Do(func() {
+		c.hcRef = NewHealthChecker(c)
+	})
 	return c.hcRef
 }
 

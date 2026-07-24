@@ -171,7 +171,9 @@ func (cb *CircuitBreakerPolicy) onSuccess(genAtEntry uint64) {
 		case StateClosed:
 			cb.failures.Store(0)
 		case StateHalfOpen:
-			cb.halfOpenInFlight--
+			if cb.halfOpenInFlight > 0 {
+				cb.halfOpenInFlight--
+			}
 			cb.state = StateClosed
 			cb.failures.Store(0)
 			cb.openedAt = time.Time{}
@@ -214,7 +216,9 @@ func (cb *CircuitBreakerPolicy) onFailure(genAtEntry uint64) {
 				}
 			}
 		case StateHalfOpen:
-			cb.halfOpenInFlight--
+			if cb.halfOpenInFlight > 0 {
+				cb.halfOpenInFlight--
+			}
 			cb.state = StateOpen
 			cb.openedAt = time.Now()
 			cb.halfOpenPermits = 0

@@ -96,7 +96,16 @@ func (b *BulkheadPolicy) worker() {
 			}
 			close(wr.dequeued)
 			b.inFlight.Add(1)
-			resp, err := wr.next(wr.ctx, wr.req)
+			var resp *http.Response
+			var err error
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						err = fmt.Errorf("ambatukam: bulkhead panic: %v", r)
+					}
+				}()
+				resp, err = wr.next(wr.ctx, wr.req)
+			}()
 			b.inFlight.Add(^uint32(0))
 			wr.resultCh <- bulkheadResult{resp: resp, err: err}
 		}
@@ -124,38 +133,40 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue)
 		}
 	} else {
-		timeout := b.cfg.QueueTimeout
-		if timeout == 0 {
-			timeout = time.Second
+		queueTimeout := b.cfg.QueueTimeout
+		if queueTimeout == 0 {
+			queueTimeout = time.Second
 		}
-		remaining := time.Until(time.Now().Add(timeout))
+		enqueueStart := time.Now()
+		remaining := queueTimeout
 		if remaining <= 0 {
 			b.deny(req.Method, req.URL.String())
 			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
-				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, timeout)
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, queueTimeout)
 		}
 		select {
 		case b.queue <- wr:
 		case <-time.After(remaining):
 			b.deny(req.Method, req.URL.String())
 			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
-				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, timeout)
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, queueTimeout)
 		case <-ctx.Done():
 			b.deny(req.Method, req.URL.String())
 			return nil, ctx.Err()
 		}
-	}
-	timeout := b.cfg.QueueTimeout
-	if timeout == 0 && b.cfg.MaxQueue > 0 {
-		timeout = time.Second
-	}
-	if b.cfg.MaxQueue > 0 && timeout > 0 {
-		select {
-		case <-wr.dequeued:
-		case <-time.After(timeout):
+		// Use remaining time for dequeue wait, not a fresh timeout.
+		remaining = queueTimeout - time.Since(enqueueStart)
+		if remaining <= 0 {
 			b.deny(req.Method, req.URL.String())
 			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
-				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, timeout)
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, queueTimeout)
+		}
+		select {
+		case <-wr.dequeued:
+		case <-time.After(remaining):
+			b.deny(req.Method, req.URL.String())
+			return nil, fmt.Errorf("%w: max_concurrent=%d, max_queue=%d, queue_timeout=%v",
+				ErrBulkheadFull, b.cfg.MaxConcurrent, b.cfg.MaxQueue, queueTimeout)
 		case <-ctx.Done():
 			b.deny(req.Method, req.URL.String())
 			return nil, ctx.Err()

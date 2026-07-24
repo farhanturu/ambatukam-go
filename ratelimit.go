@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync/atomic"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type RateLimitPolicy struct {
 	cfg       RateLimitConfig
 	disabled  bool
 	closedAll bool
+	closed    atomic.Bool
 }
 
 func NewRateLimit(cfg RateLimitConfig) *RateLimitPolicy {
@@ -113,7 +115,7 @@ func (r *RateLimitPolicy) Execute(ctx context.Context, req *http.Request, next P
 }
 
 func (r *RateLimitPolicy) Close() {
-	if r.stop != nil {
+	if r.stop != nil && r.closed.CompareAndSwap(false, true) {
 		close(r.stop)
 	}
 }
