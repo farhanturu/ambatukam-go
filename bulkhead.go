@@ -171,13 +171,6 @@ func (b *BulkheadPolicy) Execute(ctx context.Context, req *http.Request, next Po
 			b.deny(req.Method, req.URL.String())
 			return nil, ctx.Err()
 		}
-	} else {
-		select {
-		case <-wr.dequeued:
-		case <-ctx.Done():
-			b.deny(req.Method, req.URL.String())
-			return nil, ctx.Err()
-		}
 	}
 	select {
 	case result := <-resultCh:
