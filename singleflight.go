@@ -5,9 +5,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type SingleflightPolicy struct {
@@ -20,6 +22,7 @@ type singleflightCall struct {
 	val       *http.Response
 	bodyBytes []byte
 	wg        sync.WaitGroup
+	created   time.Time
 }
 
 func NewSingleflight() *SingleflightPolicy {
@@ -46,6 +49,9 @@ func (sf *SingleflightPolicy) buildKey(req *http.Request) (string, error) {
 	return base + " body:" + hex.EncodeToString(h[:8]), nil
 }
 
+// singleflightTTL is the max age of a call entry before it is treated as stale.
+const singleflightTTL = 60 * time.Second
+
 func (sf *SingleflightPolicy) Execute(ctx context.Context, req *http.Request, next PolicyFunc) (*http.Response, error) {
 	key, err := sf.buildKey(req)
 	if err != nil {
@@ -53,22 +59,36 @@ func (sf *SingleflightPolicy) Execute(ctx context.Context, req *http.Request, ne
 	}
 	sf.mu.Lock()
 	if c, ok := sf.calls[key]; ok {
-		sf.mu.Unlock()
-		c.wg.Wait()
-		if c.err != nil {
-			return nil, c.err
+		// Evict stale entries that outlived the TTL.
+		if time.Since(c.created) > singleflightTTL {
+			delete(sf.calls, key)
+		} else {
+			sf.mu.Unlock()
+			c.wg.Wait()
+			if c.err != nil {
+				return nil, c.err
+			}
+			clone := *c.val
+			clone.Body = io.NopCloser(bytes.NewReader(c.bodyBytes))
+			clone.ContentLength = int64(len(c.bodyBytes))
+			return &clone, nil
 		}
-		clone := *c.val
-		clone.Body = io.NopCloser(bytes.NewReader(c.bodyBytes))
-		clone.ContentLength = int64(len(c.bodyBytes))
-		return &clone, nil
 	}
-	c := &singleflightCall{}
+	c := &singleflightCall{created: time.Now()}
 	c.wg.Add(1)
 	sf.calls[key] = c
 	sf.mu.Unlock()
 
-	c.val, c.err = next(ctx, req)
+	// Panic-safe: always mark the call done so waiters don't deadlock.
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				c.err = fmt.Errorf("ambatukam: singleflight panic: %v", r)
+				c.wg.Done()
+			}
+		}()
+		c.val, c.err = next(ctx, req)
+	}()
 
 	if c.val != nil && c.val.Body != nil && c.err == nil {
 		c.bodyBytes, _ = io.ReadAll(c.val.Body)

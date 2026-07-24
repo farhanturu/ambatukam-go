@@ -134,6 +134,9 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 		select {
 		case <-ctx.Done():
 			timer.Stop()
+			if resp != nil {
+				resp.Body.Close()
+			}
 			return nil, ctx.Err()
 		case <-timer.C:
 		}
@@ -143,6 +146,9 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 		}
 	}
 
+	if lastResp != nil {
+		lastResp.Body.Close()
+	}
 	return nil, &RequestError{
 		Method:   req.Method,
 		URL:      req.URL.String(),
