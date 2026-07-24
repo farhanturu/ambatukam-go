@@ -20,8 +20,8 @@ type SingleflightPolicy struct {
 type singleflightCall struct {
 	val       *http.Response
 	err       error
-	bodyBytes []byte
 	created   time.Time
+	bodyBytes []byte
 	wg        sync.WaitGroup
 }
 
