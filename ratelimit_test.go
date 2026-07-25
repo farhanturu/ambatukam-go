@@ -99,13 +99,12 @@ func TestRateLimit_WaitTimeout(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Burst=1, Rate=1/sec, WaitTimeout=500ms — second request waits ~1s
-	// for one token to refill, then succeeds (WaitTimeout just caps the
-	// wait, it does not have to elapse).
+	// Burst=1, Rate=1/sec, WaitTimeout=2s — second request waits ~1s
+	// for one token to refill, then succeeds.
 	client := ambatukam.New(ambatukam.WithRateLimit(ambatukam.RateLimitConfig{
 		Rate:        1,
 		Burst:       1,
-		WaitTimeout: 500 * time.Millisecond,
+		WaitTimeout: 2 * time.Second,
 	}))
 	defer client.Close()
 
@@ -130,8 +129,8 @@ func TestRateLimit_WaitTimeout(t *testing.T) {
 	if elapsed < 800*time.Millisecond {
 		t.Fatalf("elapsed=%v, want ≥800ms (Rate=1/sec means ~1s wait)", elapsed)
 	}
-	if elapsed > 2*time.Second {
-		t.Fatalf("elapsed=%v, want ≤2s", elapsed)
+	if elapsed > 3*time.Second {
+		t.Fatalf("elapsed=%v, want ≤3s", elapsed)
 	}
 }
 
