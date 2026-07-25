@@ -42,7 +42,6 @@ func (rb *RetryBudget) Allow() bool {
 			rb.windowStart.Store(now)
 		}
 		rb.mu.Unlock()
-		start = rb.windowStart.Load()
 	}
 
 	rb.total.Add(1)

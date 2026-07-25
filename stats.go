@@ -35,9 +35,7 @@ type statsRecorder struct {
 	started        time.Time
 	mu             sync.RWMutex
 	circuitState   State
-	bulkheadFlight uint32
 	bulkheadDenied uint64
-	rateTokens     int
 }
 
 func newStatsRecorder(inner MetricsRecorder) *statsRecorder {

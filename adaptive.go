@@ -2,7 +2,6 @@ package ambatukam
 
 import (
 	"context"
-	"math"
 	"net/http"
 	"sort"
 	"sync"
@@ -99,18 +98,4 @@ func (at *AdaptiveTimeoutPolicy) CurrentTimeout() time.Duration {
 	at.mu.RLock()
 	defer at.mu.RUnlock()
 	return at.median
-}
-
-func percentile(sorted []time.Duration, p int) time.Duration {
-	if len(sorted) == 0 {
-		return 0
-	}
-	idx := int(math.Ceil(float64(p)/100*float64(len(sorted)))) - 1
-	if idx < 0 {
-		idx = 0
-	}
-	if idx >= len(sorted) {
-		idx = len(sorted) - 1
-	}
-	return sorted[idx]
 }

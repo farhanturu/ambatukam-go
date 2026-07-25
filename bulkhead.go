@@ -17,7 +17,6 @@ type bulkheadRequest struct {
 	next     PolicyFunc
 	resultCh chan bulkheadResult
 	dequeued chan struct{}
-	priority int
 }
 
 type bulkheadResult struct {
