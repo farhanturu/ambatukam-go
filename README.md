@@ -78,6 +78,7 @@ resp, err := client.Get(ctx, "https://api.stripe.com/charges")
 | Request ID propagation | ✅ Built-in | DIY |
 | Hooks (auth, logging, metrics) | ✅ 5 callbacks | Varies |
 | Composable policies | ✅ `Chain()` | Manual |
+| Max body size limit | ✅ `WithMaxBodySize` | DIY |
 | **Zero dependencies** | ✅ **None** | 3-5 deps |
 
 ---
@@ -250,6 +251,14 @@ ambatukam.WithSingleflight()
 Deduplicate identical concurrent requests. 10 goroutines requesting the same data = 1 HTTP call.
 
 The dedup key is `method + URL` for idempotent methods (GET, HEAD, OPTIONS, DELETE), and `method + URL + sha256(body)` for methods with a payload (POST, PUT, PATCH). Requests with different bodies are never merged.
+
+### 📏 Max Body Size
+
+```go
+ambatukam.WithMaxBodySize(10 << 20) // 10MB
+```
+
+Limits request body buffering. Bodies exceeding the limit skip singleflight dedup and return an error in retry. Prevents OOM from large request bodies.
 
 ### 🏷️ Request ID
 
@@ -531,8 +540,8 @@ Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transpo
 
 ## 🗺️ Roadmap
 
-### v1.2.2 (current)
-Production hardening: proper FIFO bulkhead (worker pool), lock-free rate limiter, body-aware singleflight, independent hooks policy, `WithCustomLogger` functional, HealthChecker goroutine cleanup, `*`/`**` wildcard timeout maps, fallback attempt propagation. Full stress test suite with DDoS-level concurrency.
+### v1.2.4 (current)
+Performance, safety, and API improvements: pre-built middleware chain (zero allocation per Do call), deadline-based rate limiter (no infinite loop), panic recovery in fallback handlers, `WithMaxBodySize` for OOM prevention, HTTP method helpers (`Put`, `Delete`, `Patch`, `Head`, `Options`).
 
 ### v2.0 (next)
 OpenTelemetry tracing, adaptive timeout (based on p99 latency), distributed (Redis-backed) circuit breaker, gRPC support.
