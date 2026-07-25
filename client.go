@@ -11,13 +11,15 @@ import (
 )
 
 type Client struct {
-	hooks    Hooks
-	metrics  MetricsRecorder
-	hc       *http.Client
-	logger   *slog.Logger
-	hcRef    *HealthChecker
-	policies []Policy
-	hcOnce   sync.Once
+	hooks       Hooks
+	metrics     MetricsRecorder
+	hc          *http.Client
+	logger      *slog.Logger
+	hcRef       *HealthChecker
+	policies    []Policy
+	chain       PolicyFunc
+	hcOnce      sync.Once
+	maxBodySize int64
 }
 
 func New(opts ...Option) *Client {
@@ -34,6 +36,9 @@ func New(opts ...Option) *Client {
 		case *RetryPolicy:
 			pp.WithHooks(c.hooks)
 			pp.WithMetrics(c.metrics)
+			if c.maxBodySize > 0 && pp.cfg.MaxBodySize == 0 {
+				pp.cfg.MaxBodySize = c.maxBodySize
+			}
 		case *CircuitBreakerPolicy:
 			pp.WithHooks(c.hooks)
 			pp.WithMetrics(c.metrics)
@@ -46,12 +51,32 @@ func New(opts ...Option) *Client {
 			pp.WithMetrics(c.metrics)
 		case *TimeoutPolicy:
 			pp.WithMetrics(c.metrics)
+		case *SingleflightPolicy:
+			if c.maxBodySize > 0 {
+				pp.SetMaxBodySize(c.maxBodySize)
+			}
 		}
 	}
 	if c.hooks.BeforeRequest != nil || c.hooks.AfterResponse != nil {
 		c.policies = append(c.policies, &hooksPolicy{hooks: c.hooks})
 	}
+	c.chain = c.buildChain()
 	return c
+}
+
+func (c *Client) buildChain() PolicyFunc {
+	httpDo := func(ctx context.Context, r *http.Request) (*http.Response, error) {
+		return c.hc.Do(r)
+	}
+	fn := httpDo
+	for i := len(c.policies) - 1; i >= 0; i-- {
+		p := c.policies[i]
+		next := fn
+		fn = func(ctx context.Context, r *http.Request) (*http.Response, error) {
+			return p.Execute(ctx, r, next)
+		}
+	}
+	return fn
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
@@ -59,18 +84,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("ambatukam.Do: %w", ErrNilRequest)
 	}
 	start := time.Now()
-	funcs := make([]PolicyFunc, len(c.policies)+1)
-	funcs[len(funcs)-1] = func(ctx context.Context, r *http.Request) (*http.Response, error) {
-		return c.hc.Do(r)
-	}
-	for i := len(c.policies) - 1; i >= 0; i-- {
-		p := c.policies[i]
-		next := funcs[i+1]
-		funcs[i] = func(ctx context.Context, r *http.Request) (*http.Response, error) {
-			return p.Execute(ctx, r, next)
-		}
-	}
-	resp, err := funcs[0](req.Context(), req)
+	resp, err := c.chain(req.Context(), req)
 	duration := time.Since(start)
 	status := 0
 	if resp != nil {
@@ -94,6 +108,48 @@ func (c *Client) Post(ctx context.Context, url, contentType string, body io.Read
 		return nil, err
 	}
 	req.Header.Set("Content-Type", contentType)
+	return c.Do(req)
+}
+
+func (c *Client) Put(ctx context.Context, url, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", contentType)
+	return c.Do(req)
+}
+
+func (c *Client) Patch(ctx context.Context, url, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", contentType)
+	return c.Do(req)
+}
+
+func (c *Client) Delete(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+func (c *Client) Head(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+func (c *Client) Options(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodOptions, url, nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 

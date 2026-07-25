@@ -13,8 +13,9 @@ import (
 )
 
 type SingleflightPolicy struct {
-	calls map[string]*singleflightCall
-	mu    sync.Mutex
+	calls       map[string]*singleflightCall
+	mu          sync.Mutex
+	maxBodySize int64
 }
 
 type singleflightCall struct {
@@ -29,11 +30,35 @@ func NewSingleflight() *SingleflightPolicy {
 	return &SingleflightPolicy{calls: make(map[string]*singleflightCall)}
 }
 
+func (sf *SingleflightPolicy) SetMaxBodySize(n int64) {
+	sf.maxBodySize = n
+}
+
 func (sf *SingleflightPolicy) buildKey(req *http.Request) (string, error) {
 	base := req.Method + " " + req.URL.String()
 	if req.Body == nil || req.Method == http.MethodGet || req.Method == http.MethodHead ||
 		req.Method == http.MethodOptions || req.Method == http.MethodDelete {
 		return base, nil
+	}
+	if sf.maxBodySize > 0 {
+		limited := io.LimitReader(req.Body, sf.maxBodySize+1)
+		bodyBytes, err := io.ReadAll(limited)
+		if err != nil {
+			return "", err
+		}
+		_ = req.Body.Close()
+		if int64(len(bodyBytes)) > sf.maxBodySize {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			req.ContentLength = int64(len(bodyBytes))
+			return base, nil
+		}
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		req.GetBody = func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(bodyBytes)), nil
+		}
+		req.ContentLength = int64(len(bodyBytes))
+		h := sha256.Sum256(bodyBytes)
+		return base + " body:" + hex.EncodeToString(h[:8]), nil
 	}
 	bodyBytes, err := io.ReadAll(req.Body)
 	if err != nil {

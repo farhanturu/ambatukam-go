@@ -24,6 +24,7 @@ type RetryConfig struct {
 	Multiplier     float64
 	Jitter         float64
 	MaxRetries     int
+	MaxBodySize    int64
 }
 
 type CircuitConfig struct {
@@ -137,6 +138,9 @@ func WithTimeoutMap(rules map[string]time.Duration) Option {
 	return func(c *Client) {
 		c.policies = append(c.policies, NewTimeoutMap(rules))
 	}
+}
+func WithMaxBodySize(n int64) Option {
+	return func(c *Client) { c.maxBodySize = n }
 }
 func DefaultConfig() []Option {
 	return []Option{

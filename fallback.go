@@ -40,7 +40,16 @@ func (f *FallbackPolicy) Execute(ctx context.Context, req *http.Request, next Po
 	if f.metrics != nil {
 		f.metrics.RecordFallback(req.Method, req.URL.String())
 	}
-	fallbackResp, fallbackErr := f.handler(req, err)
+	var fallbackResp *http.Response
+	var fallbackErr error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fallbackErr = fmt.Errorf("ambatukam: fallback panic: %v", r)
+			}
+		}()
+		fallbackResp, fallbackErr = f.handler(req, err)
+	}()
 	if fallbackErr != nil {
 		attempts := 1
 		var reqErr *RequestError

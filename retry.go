@@ -84,9 +84,20 @@ func (r *RetryPolicy) Execute(ctx context.Context, req *http.Request, next Polic
 	var bodyBytes []byte
 	if req.Body != nil {
 		var err error
-		bodyBytes, err = io.ReadAll(req.Body)
-		if err != nil {
-			return nil, fmt.Errorf("retry: read body: %w", err)
+		if r.cfg.MaxBodySize > 0 {
+			limited := io.LimitReader(req.Body, r.cfg.MaxBodySize+1)
+			bodyBytes, err = io.ReadAll(limited)
+			if err != nil {
+				return nil, fmt.Errorf("retry: read body: %w", err)
+			}
+			if int64(len(bodyBytes)) > r.cfg.MaxBodySize {
+				return nil, fmt.Errorf("retry: body size %d exceeds max %d", len(bodyBytes), r.cfg.MaxBodySize)
+			}
+		} else {
+			bodyBytes, err = io.ReadAll(req.Body)
+			if err != nil {
+				return nil, fmt.Errorf("retry: read body: %w", err)
+			}
 		}
 		_ = req.Body.Close()
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
