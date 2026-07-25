@@ -11,15 +11,20 @@ import (
 )
 
 type Client struct {
-	hooks       Hooks
-	metrics     MetricsRecorder
-	policies    []Policy
-	hc          *http.Client
-	logger      *slog.Logger
-	hcRef       *HealthChecker
-	chain       PolicyFunc
-	maxBodySize int64
-	hcOnce      sync.Once
+	hooks           Hooks
+	metrics         MetricsRecorder
+	policies        []Policy
+	hc              *http.Client
+	logger          *slog.Logger
+	hcRef           *HealthChecker
+	chain           PolicyFunc
+	maxBodySize     int64
+	hcOnce          sync.Once
+	cache           *CachePolicy
+	retryBudget     *RetryBudget
+	adaptiveTimeout *AdaptiveTimeoutPolicy
+	requestLogger   *RequestLogger
+	stats           *statsRecorder
 }
 
 func New(opts ...Option) *Client {
@@ -38,6 +43,9 @@ func New(opts ...Option) *Client {
 			pp.WithMetrics(c.metrics)
 			if c.maxBodySize > 0 && pp.cfg.MaxBodySize == 0 {
 				pp.cfg.MaxBodySize = c.maxBodySize
+			}
+			if c.retryBudget != nil {
+				pp.WithBudget(c.retryBudget)
 			}
 		case *CircuitBreakerPolicy:
 			pp.WithHooks(c.hooks)
@@ -60,7 +68,28 @@ func New(opts ...Option) *Client {
 	if c.hooks.BeforeRequest != nil || c.hooks.AfterResponse != nil {
 		c.policies = append(c.policies, &hooksPolicy{hooks: c.hooks})
 	}
-	c.chain = c.buildChain()
+	if c.requestLogger != nil {
+		wrapped := make([]PolicyFunc, len(c.policies)+1)
+		httpDo := func(ctx context.Context, r *http.Request) (*http.Response, error) {
+			return c.hc.Do(r)
+		}
+		wrapped[len(wrapped)-1] = httpDo
+		for i := len(c.policies) - 1; i >= 0; i-- {
+			p := c.policies[i]
+			inner := wrapped[i+1]
+			wrapped[i] = func(ctx context.Context, r *http.Request) (*http.Response, error) {
+				return p.Execute(ctx, r, inner)
+			}
+		}
+		c.chain = c.requestLogger.Wrap(wrapped[0])
+	} else {
+		c.chain = c.buildChain()
+	}
+	c.stats = newStatsRecorder(c.metrics)
+	c.metrics = c.stats
+	if c.cache != nil {
+		c.cache.SetStats(c.stats)
+	}
 	return c
 }
 
@@ -182,6 +211,20 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func (c *Client) Transport() http.RoundTripper {
 	return roundTripperFunc(c.RoundTrip)
+}
+
+func (c *Client) Stats() ClientStats {
+	var bhInFlight uint32
+	var rateTokens int
+	for _, p := range c.policies {
+		if b, ok := p.(*BulkheadPolicy); ok {
+			bhInFlight = b.InFlight()
+		}
+		if r, ok := p.(*RateLimitPolicy); ok {
+			rateTokens = r.AvailableTokens()
+		}
+	}
+	return c.stats.snapshot(bhInFlight, rateTokens)
 }
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)

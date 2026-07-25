@@ -42,6 +42,7 @@ type BulkheadConfig struct {
 	MaxConcurrent uint32
 	MaxQueue      uint32
 	QueueTimeout  time.Duration
+	Priority      bool
 }
 
 type RateLimitConfig struct {
@@ -141,6 +142,36 @@ func WithTimeoutMap(rules map[string]time.Duration) Option {
 }
 func WithMaxBodySize(n int64) Option {
 	return func(c *Client) { c.maxBodySize = n }
+}
+func WithCache(cfg CacheConfig) Option {
+	return func(c *Client) {
+		p := NewCache(cfg)
+		c.policies = append(c.policies, p)
+		c.cache = p
+	}
+}
+func WithInterceptor(i Interceptor) Option {
+	return func(c *Client) {
+		c.policies = append(c.policies, &interceptorPolicy{interceptor: i})
+	}
+}
+func WithAdaptiveTimeout(cfg AdaptiveTimeoutConfig) Option {
+	return func(c *Client) {
+		p := NewAdaptiveTimeout(cfg)
+		c.policies = append(c.policies, p)
+		c.adaptiveTimeout = p
+	}
+}
+func WithRetryBudget(budget float64, window time.Duration) Option {
+	return func(c *Client) {
+		c.retryBudget = NewRetryBudget(budget, window)
+	}
+}
+func WithRequestLog(cfg RequestLogConfig) Option {
+	return func(c *Client) {
+		rl := NewRequestLogger(cfg)
+		c.requestLogger = rl
+	}
 }
 func DefaultConfig() []Option {
 	return []Option{

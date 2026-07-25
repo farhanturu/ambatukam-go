@@ -121,3 +121,10 @@ func (r *RateLimitPolicy) Close() {
 		close(r.stop)
 	}
 }
+
+func (r *RateLimitPolicy) AvailableTokens() int {
+	if r.tokens == nil {
+		return 0
+	}
+	return len(r.tokens)
+}

@@ -18,6 +18,7 @@ type RetryPolicy struct {
 	metrics MetricsRecorder
 	logger  *slog.Logger
 	cfg     RetryConfig
+	budget  *RetryBudget
 }
 
 func DefaultRetryConfig() RetryConfig {
@@ -77,6 +78,11 @@ func (r *RetryPolicy) WithMetrics(m MetricsRecorder) *RetryPolicy {
 	if m != nil {
 		r.metrics = m
 	}
+	return r
+}
+
+func (r *RetryPolicy) WithBudget(b *RetryBudget) *RetryPolicy {
+	r.budget = b
 	return r
 }
 
@@ -244,6 +250,9 @@ func (r *RetryPolicy) shouldRetry(req *http.Request, resp *http.Response, err er
 	}
 	if req == nil {
 		return err != nil
+	}
+	if r.budget != nil && !r.budget.Allow() {
+		return false
 	}
 	if r.cfg.ShouldRetry != nil {
 		return r.cfg.ShouldRetry(resp, err)
