@@ -79,6 +79,13 @@ resp, err := client.Get(ctx, "https://api.stripe.com/charges")
 | Hooks (auth, logging, metrics) | ✅ 5 callbacks | Varies |
 | Composable policies | ✅ `Chain()` | Manual |
 | Max body size limit | ✅ `WithMaxBodySize` | DIY |
+| Response cache | ✅ `WithCache` | Need `patrickmn/go-cache` |
+| Adaptive timeout | ✅ `WithAdaptiveTimeout` | DIY |
+| Retry budget | ✅ `WithRetryBudget` | DIY |
+| Interceptors | ✅ `WithInterceptor` | Manual |
+| Priority bulkhead | ✅ `WithBulkhead(Priority:true)` | DIY |
+| Request logging | ✅ `WithRequestLog` | Manual |
+| Client stats | ✅ `client.Stats()` | DIY |
 | **Zero dependencies** | ✅ **None** | 3-5 deps |
 
 ---
@@ -259,6 +266,84 @@ ambatukam.WithMaxBodySize(10 << 20) // 10MB
 ```
 
 Limits request body buffering. Bodies exceeding the limit skip singleflight dedup and return an error in retry. Prevents OOM from large request bodies.
+
+### 💾 Response Cache
+
+```go
+ambatukam.WithCache(ambatukam.CacheConfig{
+    TTL:        5 * time.Minute,
+    MaxEntries: 1000,
+    Methods:    []string{"GET", "HEAD"},
+})
+```
+
+Built-in HTTP response cache with TTL and LRU eviction. Cache hits skip the entire middleware chain.
+
+### ⏱️ Adaptive Timeout
+
+```go
+ambatukam.WithAdaptiveTimeout(ambatukam.AdaptiveTimeoutConfig{
+    Initial:    5 * time.Second,
+    Percentile: 99,
+    Window:     5 * time.Minute,
+})
+```
+
+Timeout adjusts automatically based on p99 latency history. No manual tuning needed.
+
+### 💰 Retry Budget
+
+```go
+ambatukam.WithRetryBudget(0.1, 10*time.Second) // max 10% retries
+```
+
+Limits total retry ratio within a time window. Prevents cascade failures during outages.
+
+### 🔌 Interceptor
+
+```go
+ambatukam.WithInterceptor(func(req *http.Request, next ambatukam.PolicyFunc) (*http.Response, error) {
+    req.Header.Set("X-Custom", "value")
+    return next(req.Context(), req)
+})
+```
+
+Flexible request/response middleware. Can transform, log, auth, or short-circuit requests.
+
+### 🚦 Priority Bulkhead
+
+```go
+ambatukam.WithBulkhead(ambatukam.BulkheadConfig{
+    MaxConcurrent: 10,
+    MaxQueue:      100,
+    Priority:      true,
+})
+// Mark request as high-priority:
+ctx := ambatukam.WithPriority(context.Background())
+resp, err := client.Get(ctx, url)
+```
+
+High-priority requests jump the queue. Use `ambatukam.WithPriority(ctx)` to mark requests.
+
+### 📝 Request Logging
+
+```go
+ambatukam.WithRequestLog(ambatukam.RequestLogConfig{
+    LogHeaders: []string{"Authorization", "Content-Type"},
+})
+```
+
+Structured request/response logging with configurable header capture.
+
+### 📈 Client Stats
+
+```go
+stats := client.Stats()
+fmt.Printf("Requests: %d, Failed: %d\n", stats.RequestsTotal, stats.RequestsFailed)
+fmt.Printf("Cache Hits: %d, Misses: %d\n", stats.CacheHits, stats.CacheMisses)
+```
+
+Real-time metrics snapshot including circuit state, bulkhead in-flight, cache stats, and uptime.
 
 ### 🏷️ Request ID
 
@@ -540,11 +625,11 @@ Ambatukam Go's `*Client` is a drop-in `*http.Client`. Wrap your existing transpo
 
 ## 🗺️ Roadmap
 
-### v1.2.4 (current)
-Performance, safety, and API improvements: pre-built middleware chain (zero allocation per Do call), deadline-based rate limiter (no infinite loop), panic recovery in fallback handlers, `WithMaxBodySize` for OOM prevention, HTTP method helpers (`Put`, `Delete`, `Patch`, `Head`, `Options`).
+### v1.2.5 (current)
+Major feature release: response cache with TTL/LRU, adaptive timeout based on p99 latency, retry budget for cascade failure prevention, request/response interceptors, priority bulkhead queue, structured request logging, and real-time client stats.
 
 ### v2.0 (next)
-OpenTelemetry tracing, adaptive timeout (based on p99 latency), distributed (Redis-backed) circuit breaker, gRPC support.
+OpenTelemetry tracing, distributed (Redis-backed) circuit breaker, gRPC support.
 
 ---
 
