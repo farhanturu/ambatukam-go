@@ -54,10 +54,10 @@ func TestStats_FailedRequests(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		resp, err := client.Get(context.Background(), srv.URL)
-		if err != nil {
-			t.Fatalf("request %d: %v", i, err)
+		if resp != nil {
+			resp.Body.Close()
 		}
-		resp.Body.Close()
+		_ = err
 	}
 
 	stats := client.Stats()
@@ -424,12 +424,16 @@ func TestCache_LFUEviction(t *testing.T) {
 
 func TestFallback_PanicRecovery(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(500)
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Fatal("server doesn't support hijack")
+		}
+		conn, _, _ := hj.Hijack()
+		conn.Close()
 	}))
 	defer srv.Close()
 
 	client := New(
-		WithCircuitBreaker(CircuitConfig{FailureThreshold: 100}),
 		WithFallback(FallbackConfig{
 			Handler: func(req *http.Request, err error) (*http.Response, error) {
 				panic("test panic in fallback")
