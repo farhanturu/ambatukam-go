@@ -93,25 +93,26 @@ func (r *RateLimitPolicy) Execute(ctx context.Context, req *http.Request, next P
 		return nil, fmt.Errorf("%w: rate=%v, burst=%d, wait_timeout=%v",
 			ErrRateLimited, r.cfg.Rate, r.cfg.Burst, r.cfg.WaitTimeout)
 	}
-	select {
-	case <-r.tokens:
-		return next(ctx, req)
-	default:
-	}
-	if r.cfg.WaitTimeout == 0 {
-		r.deny(req.Method, req.URL.String())
-		return nil, fmt.Errorf("%w: rate=%v, burst=%d, wait_timeout=%v",
-			ErrRateLimited, r.cfg.Rate, r.cfg.Burst, r.cfg.WaitTimeout)
-	}
-	select {
-	case <-r.tokens:
-		return next(ctx, req)
-	case <-time.After(r.cfg.WaitTimeout):
-		r.deny(req.Method, req.URL.String())
-		return nil, fmt.Errorf("%w: rate=%v, burst=%d, wait_timeout=%v",
-			ErrRateLimited, r.cfg.Rate, r.cfg.Burst, r.cfg.WaitTimeout)
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	deadline := time.Now().Add(r.cfg.WaitTimeout)
+	for {
+		select {
+		case <-r.tokens:
+			return next(ctx, req)
+		default:
+		}
+		if r.cfg.WaitTimeout == 0 || time.Now().After(deadline) {
+			r.deny(req.Method, req.URL.String())
+			return nil, fmt.Errorf("%w: rate=%v, burst=%d, wait_timeout=%v",
+				ErrRateLimited, r.cfg.Rate, r.cfg.Burst, r.cfg.WaitTimeout)
+		}
+		remaining := time.Until(deadline)
+		select {
+		case <-r.tokens:
+			return next(ctx, req)
+		case <-time.After(remaining):
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
 	}
 }
 

@@ -18,8 +18,8 @@ type Client struct {
 	hcRef       *HealthChecker
 	policies    []Policy
 	chain       PolicyFunc
-	hcOnce      sync.Once
 	maxBodySize int64
+	hcOnce      sync.Once
 }
 
 func New(opts ...Option) *Client {
