@@ -378,7 +378,7 @@ func TestMaxBodySize_ExceedsLimit(t *testing.T) {
 	defer client.Close()
 
 	bigBody := make([]byte, 100)
-	resp, err := client.Post(context.Background(), srv.URL, "application/octet-stream", 
+	resp, err := client.Post(context.Background(), srv.URL, "application/octet-stream",
 		bytes.NewReader(bigBody))
 	if err == nil {
 		resp.Body.Close()

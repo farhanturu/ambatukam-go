@@ -7,12 +7,12 @@ import (
 )
 
 type RetryBudget struct {
-	budget     float64
-	window     time.Duration
-	total      atomic.Int64
-	retries    atomic.Int64
+	budget      float64
+	window      time.Duration
+	total       atomic.Int64
+	retries     atomic.Int64
 	windowStart atomic.Int64
-	mu         sync.Mutex
+	mu          sync.Mutex
 }
 
 func NewRetryBudget(budget float64, window time.Duration) *RetryBudget {
