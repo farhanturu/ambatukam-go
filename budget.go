@@ -22,11 +22,12 @@ func NewRetryBudget(budget float64, window time.Duration) *RetryBudget {
 	if window <= 0 {
 		window = 10 * time.Second
 	}
-	return &RetryBudget{
-		budget:      budget,
-		window:      window,
-		windowStart: atomic.Int64(time.Now().UnixNano()),
+	rb := &RetryBudget{
+		budget: budget,
+		window: window,
 	}
+	rb.windowStart.Store(time.Now().UnixNano())
+	return rb
 }
 
 func (rb *RetryBudget) Allow() bool {

@@ -19,7 +19,7 @@ type AdaptiveTimeoutConfig struct {
 type AdaptiveTimeoutPolicy struct {
 	cfg       AdaptiveTimeoutConfig
 	durations []time.Duration
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	median    time.Duration
 	metrics   MetricsRecorder
 }
