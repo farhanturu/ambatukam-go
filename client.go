@@ -13,13 +13,13 @@ import (
 type Client struct {
 	hooks       Hooks
 	metrics     MetricsRecorder
+	policies    []Policy
 	hc          *http.Client
 	logger      *slog.Logger
 	hcRef       *HealthChecker
-	policies    []Policy
 	chain       PolicyFunc
-	hcOnce      sync.Once
 	maxBodySize int64
+	hcOnce      sync.Once
 }
 
 func New(opts ...Option) *Client {
